@@ -6,7 +6,21 @@ from config.util import get_current_user
 
 
 ENGINE = None
-SQL_PATH = os.path.join(os.path.dirname(__file__), "configs.sqlite")
+_DEFAULT_DB_NAME = "configs.sqlite"
+SQL_PATH = os.path.join(os.path.dirname(__file__), _DEFAULT_DB_NAME)
+
+
+def set_db_name(db_name: str):
+    """Set the database file name. Call this before any database operations."""
+    global SQL_PATH, ENGINE
+    SQL_PATH = os.path.join(os.path.dirname(__file__), db_name)
+    # Reset engine so it uses the new path
+    ENGINE = None
+
+
+def get_db_name() -> str:
+    """Get the current database file name."""
+    return os.path.basename(SQL_PATH)
 
 
 class Base(DeclarativeBase):

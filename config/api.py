@@ -1,6 +1,7 @@
 import os
 import configparser
-from typing import Type, List, Optional
+import copy
+from typing import Type, List, Optional, Dict, Any
 from sqlalchemy import select
 
 from config.configs import *
@@ -79,13 +80,38 @@ def _get_init_model_files():
 
 
 def _parse_file(file: str, component_name: Optional[str]=None):
+    from sqlalchemy import Enum as SQLEnum
+    
     config = configparser.ConfigParser()
     config.read(file, encoding='utf-8')
     components = {}
     for section in config.sections():
-        config_obj = CONFIG_MAP.get(component_name or section.lower())
-        assert config_obj is not None
-        attrs = {k: getattr(config_obj, k).type.python_type(v) for k, v in config.items(section)}
+        # If component_name is provided, use it for all sections
+        # Otherwise, try to infer from section name (for model configs)
+        if component_name:
+            config_obj = CONFIG_MAP.get(component_name)
+        else:
+            # For model configs, section names like [Model], [MHA], [MLP] etc.
+            config_obj = CONFIG_MAP.get(section.lower())
+        assert config_obj is not None, f"Unknown config type: {component_name or section.lower()}. Available types: {list(CONFIG_MAP.keys())}"
+        attrs = {}
+        for k, v in config.items(section):
+            attr_column = getattr(config_obj, k)
+            attr_type = attr_column.type
+            # Handle enum types
+            if isinstance(attr_type, SQLEnum):
+                enum_class = attr_type.enum_class
+                # Find enum by value
+                enum_value = None
+                for enum_item in enum_class:
+                    if enum_item.value.lower() == v.lower():
+                        enum_value = enum_item
+                        break
+                if enum_value is None:
+                    raise ValueError(f"Invalid enum value '{v}' for {k}. Valid values: {[e.value for e in enum_class]}")
+                attrs[k] = enum_value
+            else:
+                attrs[k] = attr_type.python_type(v)
         components[section.lower()] = config_obj(**attrs)
     return components
 
@@ -119,10 +145,23 @@ def add_all(configs: List[Base]):
         session.commit()
 
 
-def query(name: str, config_type: Type[Base]) -> Base:
+def query(name: str, config_type: Type[Base], eager_load: bool = False) -> Base:
     assert issubclass(config_type, Base)
     with create_session() as session:
         stmt = select(config_type).where(config_type.name == name)
+        
+        # Eager load relationships for ModelConfig
+        if eager_load and config_type == ModelConfig:
+            from sqlalchemy.orm import joinedload
+            stmt = stmt.options(
+                joinedload(ModelConfig.mla_config),
+                joinedload(ModelConfig.mha_config),
+                joinedload(ModelConfig.mlp_config),
+                joinedload(ModelConfig.moe_config),
+                joinedload(ModelConfig.rmsnorm_config),
+                joinedload(ModelConfig.rope_config),
+            )
+        
         obj = session.scalar(stmt)
     return obj
 
@@ -137,15 +176,17 @@ def query_all(config_type: Type[Base]) -> List[Base]:
 
 def update(name: str, config_type: Type[Base], **new_attrs):
     obj = query(name, config_type)
+    assert obj is not None, f"no config found named `{name}` from component `{config_type.__name__}`"
     with create_session() as session:
         for k, v in new_attrs.items():
-            assert k in new_attrs.__dict__.keys()
+            assert hasattr(obj, k), f"object {obj.__class__} has no attribute: {k}"
             setattr(obj, k, v)
         session.commit()
 
 
 def delete(name: str, config_type: Type[Base]):
     obj = query(name, config_type)
+    assert obj is not None, f"no config found named `{name}` from component `{config_type.__name__}`"
     with create_session() as session:
         session.delete(obj)
         session.commit()
@@ -154,11 +195,20 @@ def delete(name: str, config_type: Type[Base]):
 def show(name: str, component_name: str, attr_name: Optional[str]=None, is_detail: bool=False):
     config_type = CONFIG_MAP.get(component_name)
     assert config_type is not None, f"`{component_name}` is not a valid config name"
-    obj = query(name, config_type)
+    
+    # Enable eager loading for model component to avoid DetachedInstanceError
+    eager_load = (component_name == 'model')
+    obj = query(name, config_type, eager_load=eager_load)
+
     assert obj is not None, f"no config found named `{name}` from component `{component_name}`"
     if attr_name is not None:
-        assert hasattr(obj, attr_name), f"object {obj.__class__} has no attribute name: {attr_name}"
-        print(getattr(obj, attr_name))
+        # Check if it's a nested attribute
+        if '.' in attr_name:
+            value = _get_nested_attribute(obj, attr_name)
+            print(value)
+        else:
+            assert hasattr(obj, attr_name), f"object {obj.__class__} has no attribute name: {attr_name}"
+            print(getattr(obj, attr_name))
     elif is_detail:
         print(config_detail(obj))
     else:
@@ -191,11 +241,285 @@ def config_from_file(file: str, module: str):
     return cfg
 
 
-def config_from_base(module: str, base: str, update: str):
-    ...
+def _parse_update_string(update_str: str) -> Dict[str, Any]:
+    """Parse update string like 'name=new-name,kv_lora_rank=1024' into dict"""
+    updates = {}
+    if not update_str:
+        return updates
+    
+    for item in update_str.split(','):
+        if '=' not in item:
+            continue
+        key, value = item.split('=', 1)
+        key = key.strip()
+        value = value.strip()
+        updates[key] = value
+    return updates
 
 
-# config_from_file('templates/moe.ini', '')
-# show_list('model')
-# show('Llama-3-8B', 'model', is_detail=True)
-# show_attributes('model')
+def _get_nested_attribute(obj: Base, attr_path: str):
+    """Get nested attribute value like 'mlp.dim' from object"""
+    if '.' not in attr_path:
+        # Direct attribute
+        return getattr(obj, attr_path)
+    
+    parts = attr_path.split('.')
+    if len(parts) != 2:
+        raise ValueError(f"Invalid nested attribute format: {attr_path}. Expected format: 'component.attribute'")
+    
+    component_name, attr_name = parts
+    attr_name_full = ATTRS_MAP.get(component_name)
+    if not attr_name_full:
+        raise ValueError(f"Unknown component name: {component_name}. Available components: {list(ATTRS_MAP.keys())}")
+    
+    component_obj = getattr(obj, attr_name_full, None)
+    if component_obj is None:
+        raise ValueError(f"Component {component_name} not found in {obj.name}")
+    
+    if not hasattr(component_obj, attr_name):
+        raise ValueError(f"Attribute {attr_name} not found in {component_name} component")
+    
+    return getattr(component_obj, attr_name)
+
+
+def _set_nested_attribute(obj: Base, attr_path: str, value: Any):
+    """Set nested attribute value like 'mlp.dim' on object"""
+    if '.' not in attr_path:
+        setattr(obj, attr_path, value)
+        return
+    
+    parts = attr_path.split('.')
+    if len(parts) != 2:
+        raise ValueError(f"Invalid nested attribute format: {attr_path}. Expected format: 'component.attribute'")
+    
+    component_name, attr_name = parts
+    attr_name_full = ATTRS_MAP.get(component_name)
+    if not attr_name_full:
+        raise ValueError(f"Unknown component name: {component_name}. Available components: {list(ATTRS_MAP.keys())}")
+    
+    component_obj = getattr(obj, attr_name_full, None)
+    if component_obj is None:
+        raise ValueError(f"Component {component_name} not found in {obj.name}")
+    
+    # Get attribute type for conversion (only if value is string)
+    if isinstance(value, str):
+        attr_column = getattr(component_obj.__class__, attr_name)
+        converted_value = _convert_value(value, attr_column.type)
+    else:
+        converted_value = value
+    
+    # Set the value
+    setattr(component_obj, attr_name, converted_value)
+
+
+def _convert_value(value: str, attr_type):
+    """Convert string value to appropriate type, handling enums"""
+    from sqlalchemy import Enum as SQLEnum
+    
+    python_type = attr_type.python_type
+    
+    # Handle Enum types
+    if isinstance(attr_type, SQLEnum):
+        enum_class = attr_type.enum_class
+        # Try to find the enum value by string
+        for enum_item in enum_class:
+            if enum_item.value.lower() == value.lower():
+                return enum_item
+        raise ValueError(f"Invalid enum value '{value}' for {enum_class.__name__}. Valid values: {[e.value for e in enum_class]}")
+    elif python_type == bool:
+        return value.lower() in ['true', '1', 'yes']
+    else:
+        return python_type(value)
+
+
+def _apply_updates(obj: Base, updates: Dict[str, Any], config_type: Type[Base]):
+    """Apply updates to an object, handling nested attributes like 'mlp.dim' or 'moe.routed_experts_dim'"""
+    for key, value in updates.items():
+        if '.' in key:
+            # Handle nested attributes using helper function
+            _set_nested_attribute(obj, key, value)
+        else:
+            # Direct attribute
+            if key == 'name':
+                setattr(obj, key, value)
+            else:
+                attr_column = getattr(obj.__class__, key)
+                converted_value = _convert_value(value, attr_column.type) if isinstance(value, str) else value
+                setattr(obj, key, converted_value)
+
+
+def _find_dependent_models(component_name: str, component_type: Type[Base]) -> List[str]:
+    """Find all models that depend on a component"""
+    dependent_models = []
+    with create_session() as session:
+        all_models = session.scalars(select(ModelConfig)).all()
+        for model in all_models:
+            for attr_name, component_attr in ATTRS_MAP.items():
+                model_component = getattr(model, component_attr, None)
+                if model_component and model_component.name == component_name:
+                    dependent_models.append(model.name)
+                    break
+    return dependent_models
+
+
+def _confirm_action(message: str, warning_details: List[str]) -> bool:
+    """Centralized function to ask for user confirmation, respecting test mode."""
+    import os
+    if os.environ.get('HLO_CONFIG_TEST_MODE', 'false').lower() in ['1', 'true']:
+        # In test mode, automatically confirm
+        return True
+
+    print(message)
+    for detail in warning_details:
+        print(f"  - {detail}")
+    response = input("Do you want to continue? (yes/no): ").strip().lower()
+    return response in ['yes', 'y']
+
+
+def _check_dependencies_and_confirm(component_name: str, component_type: Type[Base], operation: str, exclude_model_name: Optional[str] = None) -> bool:
+    """Check dependencies and ask for user confirmation if there are dependent models."""
+    dependent_models = _find_dependent_models(component_name, component_type)
+    
+    if exclude_model_name:
+        other_dependent_models = [m for m in dependent_models if m != exclude_model_name]
+    else:
+        other_dependent_models = dependent_models
+
+    if other_dependent_models:
+        message = f"Warning: {operation} '{component_name}' will affect the following models:"
+        return _confirm_action(message, other_dependent_models)
+    return True
+
+
+def _clone_obj(obj: Base):
+    """Creates a new instance of a SQLAlchemy object, copying attributes but not relationships or state."""
+    if obj is None:
+        return None
+    cls = obj.__class__
+    data = {c.name: getattr(obj, c.name) for c in cls.__table__.columns if c.name != 'id'}
+    new_obj = cls(**data)
+    return new_obj
+
+
+def _generate_unique_clone_name(base_name: str, component_type: Type[Base]) -> str:
+    """Generates a unique name for a cloned component."""
+    clone_name = f"{base_name}-clone"
+    if query(clone_name, component_type) is None:
+        return clone_name
+    
+    i = 1
+    while True:
+        next_name = f"{clone_name}-{i}"
+        if query(next_name, component_type) is None:
+            return next_name
+        i += 1
+
+
+def config_from_base(module: str, base: str, update_str: str, base_layer: Optional[str] = None) -> List[Base]:
+    """Create config from base config with updates"""
+    config_type = CONFIG_MAP.get(module)
+    assert config_type is not None, f"`{module}` is not a valid module name"
+    
+    with create_session() as session:
+        stmt = select(config_type).where(config_type.name == base)
+        if module == 'model':
+            from sqlalchemy.orm import joinedload
+            stmt = stmt.options(
+                joinedload(ModelConfig.mla_config), joinedload(ModelConfig.mha_config),
+                joinedload(ModelConfig.mlp_config), joinedload(ModelConfig.moe_config),
+                joinedload(ModelConfig.rmsnorm_config), joinedload(ModelConfig.rope_config),
+            )
+        base_obj = session.scalar(stmt)
+        assert base_obj is not None, f"no config found named `{base}` from module `{module}`"
+        if module == 'model':
+            for attr_name in ATTRS_MAP.values():
+                getattr(base_obj, attr_name, None)
+
+    new_model_config = _clone_obj(base_obj)
+    
+    raw_updates = _parse_update_string(update_str)
+    model_direct_updates = {k: v for k, v in raw_updates.items() if '.' not in k}
+    component_nested_updates = {}
+    for k, v in raw_updates.items():
+        if '.' in k:
+            comp, attr = k.split('.', 1)
+            component_nested_updates.setdefault(comp, {})[attr] = v
+
+    if 'name' not in model_direct_updates:
+        raise ValueError("'name' must be provided in --update parameter when creating from base")
+    new_model_name = model_direct_updates['name']
+    if query(new_model_name, config_type) is not None:
+        raise ValueError(f"Config with name '{new_model_name}' already exists")
+    
+    _apply_updates(new_model_config, model_direct_updates, config_type)
+    
+    if module == 'model' and base_layer:
+        _parse_base_layer(new_model_config, base_layer)
+    
+    all_configs_to_merge = []
+    if module == 'model':
+        for comp_name, attr_full in ATTRS_MAP.items():
+            updates = component_nested_updates.get(comp_name, {})
+            original_component = getattr(base_obj, attr_full)
+            has_attr_changes = any(k != 'name' for k in updates)
+
+            # Scenario 2 & 3: Attribute changes exist, must clone.
+            if has_attr_changes:
+                atom_name = updates.get('name', original_component.name if original_component else None)
+                if not atom_name:
+                    raise ValueError(f"Cannot determine base component for cloning '{comp_name}'")
+                
+                atom_component = query(atom_name, CONFIG_MAP[comp_name])
+                if not atom_component:
+                    raise ValueError(f"Component '{atom_name}' to clone from does not exist.")
+
+                new_clone_name = _generate_unique_clone_name(atom_component.name, CONFIG_MAP[comp_name])
+                cloned_component = _clone_obj(atom_component)
+                cloned_component.name = new_clone_name
+                
+                updates_to_apply = {k: v for k, v in updates.items() if k != 'name'}
+                _apply_updates(cloned_component, updates_to_apply, CONFIG_MAP[comp_name])
+                
+                setattr(new_model_config, attr_full, cloned_component)
+
+            # Scenario 1: Only name is specified, no attribute changes.
+            elif 'name' in updates:
+                target_comp_name = updates['name']
+                target_component = query(target_comp_name, CONFIG_MAP[comp_name])
+                if not target_component:
+                    raise ValueError(f"Specified component '{comp_name}' with name '{target_comp_name}' not found.")
+                setattr(new_model_config, attr_full, target_component)
+
+            # Scenario 4: No updates for this component.
+            else:
+                if original_component:
+                    setattr(new_model_config, attr_full, original_component)
+
+    all_configs_to_merge.append(new_model_config)
+    
+    # Remove duplicates before returning
+    unique_configs = {cfg.name: cfg for cfg in all_configs_to_merge}.values()
+    return list(unique_configs)
+
+
+def _parse_base_layer(model_obj: ModelConfig, base_layer_str: str):
+    """Parse --base-layer string like 'mha.name=Llama-3-8B,rope.name=Llama-3-8B'"""
+    for item in base_layer_str.split(','):
+        if '=' not in item:
+            continue
+        key, component_value = item.split('=', 1)
+        key = key.strip()
+        component_value = component_value.strip()
+        
+        if key.endswith('.name'):
+            component_name = key[:-5]  # Remove '.name'
+            attr_name = ATTRS_MAP.get(component_name)
+            if attr_name:
+                component_type = CONFIG_MAP.get(component_name)
+                component_obj = query(component_value, component_type)
+                assert component_obj is not None, f"Component {component_name} with name {component_value} not found"
+                setattr(model_obj, attr_name, component_obj)
+            else:
+                raise ValueError(f"Invalid component name: {component_name}")
+        else:
+            raise ValueError(f"Invalid base-layer format: {key}. Expected format: 'component.name=value'")
