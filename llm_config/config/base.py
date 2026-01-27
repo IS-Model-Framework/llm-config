@@ -2,20 +2,14 @@ import os
 from sqlalchemy import create_engine, String
 from sqlalchemy.orm import DeclarativeBase, Session, Mapped, mapped_column
 
-from config.util import get_current_user
+from llm_config.config.util import get_current_user
 
 
 ENGINE = None
 _DEFAULT_DB_NAME = "configs.sqlite"
-SQL_PATH = os.path.join(os.path.dirname(__file__), _DEFAULT_DB_NAME)
-
-
-def set_db_name(db_name: str):
-    """Set the database file name. Call this before any database operations."""
-    global SQL_PATH, ENGINE
-    SQL_PATH = os.path.join(os.path.dirname(__file__), db_name)
-    # Reset engine so it uses the new path
-    ENGINE = None
+SQL_PATH = os.path.join(os.path.dirname(__file__),
+                        os.environ.get('HLO_CONFIG_DB_NAME', _DEFAULT_DB_NAME)
+                        )
 
 
 def get_db_name() -> str:
