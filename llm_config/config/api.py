@@ -1,11 +1,10 @@
 import os
 import configparser
-import copy
 from typing import Type, List, Optional, Dict, Any
 from sqlalchemy import select
 
-from config.configs import *
-from config.base import create_tables, create_session, Base, is_initialize
+from llm_config.config.configs import *
+from llm_config.config.base import create_tables, create_session, Base, is_initialize
 
 
 INDENTATION_STRIDE = 2

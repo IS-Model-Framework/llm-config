@@ -4,7 +4,7 @@ from sqlalchemy import Integer, ForeignKey, JSON, Boolean, Enum, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.mutable import MutableList
 
-from config.base import Base
+from llm_config.config.base import Base
 
 
 __all__ = [

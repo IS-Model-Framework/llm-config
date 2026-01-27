@@ -10,19 +10,13 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-# Import database configuration function
-from config.base import set_db_name, _DEFAULT_DB_NAME
-
 # Test configuration
 TEST_DB_NAME = "test.sqlite"
 TEST_DB_PATH = None
 BACKUP_DB_PATH = None
 TEMPLATES_DIR = Path(__file__).parent / "templates"
-RUNNER_SCRIPT = Path(__file__).parent.parent / "runner.py"
-CONFIG_DIR = Path(__file__).parent.parent / "config"
+RUNNER_SCRIPT = Path(__file__).parent.parent / "llm_config" / "runner.py"
+CONFIG_DIR = Path(__file__).parent.parent / "llm_config" / "config"
 
 # Ensure we're using the correct Python executable
 if not RUNNER_SCRIPT.exists():
@@ -42,6 +36,7 @@ def run_command(cmd, input_text=None, check=True):
         # Set environment variable for database name
         env = os.environ.copy()
         env['HLO_CONFIG_DB_NAME'] = TEST_DB_NAME
+        env["PYTHONPATH"] = f"{Path(__file__).parent.parent};{os.environ.get('PYTHONPATH', '')}"
         
         result = subprocess.run(
             cmd,
@@ -62,10 +57,6 @@ def setup_test_environment():
     """Setup test environment by setting test database name."""
     global TEST_DB_PATH, BACKUP_DB_PATH
     
-    # Set database name to test.sqlite
-    set_db_name(TEST_DB_NAME)
-    print(f"✓ Set database name to {TEST_DB_NAME}")
-    
     # Get the test database path
     TEST_DB_PATH = CONFIG_DIR / TEST_DB_NAME
     
@@ -85,10 +76,6 @@ def cleanup_test_environment():
     if TEST_DB_PATH and TEST_DB_PATH.exists():
         TEST_DB_PATH.unlink()
         print(f"✓ Removed test database {TEST_DB_NAME}")
-    
-    # Restore default database name
-    set_db_name(_DEFAULT_DB_NAME)
-    print(f"✓ Restored default database name ({_DEFAULT_DB_NAME})")
 
 
 def _run_test(name, func):

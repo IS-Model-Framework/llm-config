@@ -1,7 +1,6 @@
 import argparse
 
-from config.api import all_tables, initialize, ATTRS_MAP
-from config.configs import *
+from llm_config.config.api import all_tables, initialize, ATTRS_MAP
 
 
 def add_parse(subparsers):
@@ -237,12 +236,6 @@ def execute_show(args):
 
 
 def main():
-    # Check for database name in environment variable
-    import os
-    from config.base import set_db_name
-    db_name = os.environ.get('HLO_CONFIG_DB_NAME', 'configs.sqlite')
-    set_db_name(db_name)
-    
     initialize()
 
     args = parse_args()
