@@ -1,0 +1,39 @@
+[project]
+name = "llm-config"
+version = "0.1.0"
+description = "A config manager for LLMs."
+authors = [
+    { name = "dandan", email = "dandan@infiscale-tech.com" },
+]
+dependencies = [
+    "sqlalchemy==2.0.43",
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.scripts]
+llm_config = "llm_config.runner:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "llm_config",
+]
+exclude = [".gitignore"]
+
+[tool.hatch.build.targets.wheel]
+include = [
+    "llm_config",
+]
+exclude = [".gitignore"]
