@@ -18,7 +18,7 @@ This is a repo that abstract all LLM into components config for convenient manua
 ## Installation
 
 ```bash
-pip install https://github.com/IS-Model-Framework/llm-config.git@gemini_code
+pip install git+https://github.com/IS-Model-Framework/llm-config.git@gemini_code
 ```
 
 ## Usage
