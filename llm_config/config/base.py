@@ -7,9 +7,13 @@ from llm_config.config.util import get_current_user
 
 ENGINE = None
 _DEFAULT_DB_NAME = "configs.sqlite"
-SQL_PATH = os.path.join(os.path.dirname(__file__),
+_SQL_PATH = os.environ.get('HLO_CONFIG_DB_PATH', os.path.dirname(__file__))
+SQL_PATH = os.path.join(os.path.abspath(_SQL_PATH),
                         os.environ.get('HLO_CONFIG_DB_NAME', _DEFAULT_DB_NAME)
                         )
+
+def get_db_path():
+    return SQL_PATH
 
 
 def get_db_name() -> str:
@@ -39,11 +43,12 @@ class Base(DeclarativeBase):
 def get_engine(debug=False):
     global ENGINE
     if ENGINE is None:
-        ENGINE = create_engine(f"sqlite:///{SQL_PATH}", echo=debug)
+        ENGINE = create_engine(f"sqlite:///{get_db_path()}", echo=debug)
     return ENGINE
 
 
 def create_tables():
+    print(f"SQL PATH: {get_db_path()}")
     engine = get_engine()
     Base.metadata.create_all(engine)
 
@@ -54,4 +59,4 @@ def create_session():
 
 
 def is_initialize():
-    return os.path.exists(SQL_PATH)
+    return os.path.exists(get_db_path())

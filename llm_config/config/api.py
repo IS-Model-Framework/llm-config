@@ -15,14 +15,17 @@ CONFIG_MAP = {
     'mla': MLAConfig,
     'mha': MHAConfig,
     'rope': RopeConfig,
+    'embed': EmbeddingConfig,
     'moe': MoEConfig,
     'mlp': MLPConfig,
     'norm': RMSNormConfig,
+
 }
 ATTRS_MAP = {
     'mla': 'mla_config',
     'mha': 'mha_config',
     'rope': 'rope_config',
+    'embed': 'embed_config',
     'moe': 'moe_config',
     'mlp': 'mlp_config',
     'norm': 'rmsnorm_config',
@@ -122,6 +125,8 @@ def _construct_config(components):
             attr = ATTRS_MAP.get(component_name)
             assert attr is not None
             setattr(components['model'], attr, component)
+        if not components['model'].embed_config:
+            components['model'].embed_config = EmbeddingConfig(name=components['model'].name)
     return list(components.values())
 
 
@@ -153,12 +158,14 @@ def query(name: str, config_type: Type[Base], eager_load: bool = False) -> Base:
         if eager_load and config_type == ModelConfig:
             from sqlalchemy.orm import joinedload
             stmt = stmt.options(
+                joinedload(ModelConfig.mesh_config),
                 joinedload(ModelConfig.mla_config),
                 joinedload(ModelConfig.mha_config),
                 joinedload(ModelConfig.mlp_config),
                 joinedload(ModelConfig.moe_config),
                 joinedload(ModelConfig.rmsnorm_config),
                 joinedload(ModelConfig.rope_config),
+                joinedload(ModelConfig.embed_config),
             )
         
         obj = session.scalar(stmt)
@@ -424,15 +431,17 @@ def config_from_base(module: str, base: str, update_str: str, base_layer: Option
         if module == 'model':
             from sqlalchemy.orm import joinedload
             stmt = stmt.options(
-                joinedload(ModelConfig.mla_config), joinedload(ModelConfig.mha_config),
-                joinedload(ModelConfig.mlp_config), joinedload(ModelConfig.moe_config),
-                joinedload(ModelConfig.rmsnorm_config), joinedload(ModelConfig.rope_config),
+                joinedload(ModelConfig.mesh_config),
+                joinedload(ModelConfig.mla_config),
+                joinedload(ModelConfig.mha_config),
+                joinedload(ModelConfig.mlp_config),
+                joinedload(ModelConfig.moe_config),
+                joinedload(ModelConfig.rmsnorm_config),
+                joinedload(ModelConfig.rope_config),
+                joinedload(ModelConfig.embed_config),
             )
         base_obj = session.scalar(stmt)
         assert base_obj is not None, f"no config found named `{base}` from module `{module}`"
-        if module == 'model':
-            for attr_name in ATTRS_MAP.values():
-                getattr(base_obj, attr_name, None)
 
     new_model_config = _clone_obj(base_obj)
     
@@ -445,7 +454,7 @@ def config_from_base(module: str, base: str, update_str: str, base_layer: Option
             component_nested_updates.setdefault(comp, {})[attr] = v
 
     if 'name' not in model_direct_updates:
-        raise ValueError("'name' must be provided in --update parameter when creating from base")
+        raise ValueError("'name' must be provided in --attributes parameter when creating from base")
     new_model_name = model_direct_updates['name']
     if query(new_model_name, config_type) is not None:
         raise ValueError(f"Config with name '{new_model_name}' already exists")
@@ -482,11 +491,15 @@ def config_from_base(module: str, base: str, update_str: str, base_layer: Option
                 setattr(new_model_config, attr_full, cloned_component)
 
             # Scenario 1: Only name is specified, no attribute changes.
+            # TODO: add test case.
             elif 'name' in updates:
                 target_comp_name = updates['name']
-                target_component = query(target_comp_name, CONFIG_MAP[comp_name])
+                old_comp_name = getattr(new_model_config, f"{ATTRS_MAP[comp_name]}_name")
+                target_component = query(old_comp_name, CONFIG_MAP[comp_name])
+                target_component = _clone_obj(target_component)
                 if not target_component:
                     raise ValueError(f"Specified component '{comp_name}' with name '{target_comp_name}' not found.")
+                target_component.name = target_comp_name
                 setattr(new_model_config, attr_full, target_component)
 
             # Scenario 4: No updates for this component.
