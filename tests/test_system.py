@@ -182,7 +182,7 @@ def test_add_mla_from_base():
     success, stdout, stderr = run_command([
         sys.executable, str(RUNNER_SCRIPT),
         "add", "--module", "mla", "--from-base", "Test-Custom1",
-        "--update", "name=test-mla-from-base,kv_lora_rank=1024"
+        "--attributes", "name=test-mla-from-base,kv_lora_rank=1024"
     ])
     
     if not success:
@@ -223,7 +223,7 @@ def test_add_model_from_base():
     success, stdout, stderr = run_command([
         sys.executable, str(RUNNER_SCRIPT),
         "add", "--module", "model", "--from-base", "Test-DeepSeek-V3-671B",
-        "--update", "name=test-model-from-base,num_layers=8,moe.name=Test-DeepSeek-V3-671B,moe.shared_experts_dim=1024"
+        "--attributes", "name=test-model-from-base,num_layers=8,moe.name=Test-DeepSeek-V3-671B,moe.shared_experts_dim=1024"
     ], input_text="yes\n")
     
     if not success:
@@ -280,7 +280,7 @@ def test_update_layer():
     success, stdout, stderr = run_command([
         sys.executable, str(RUNNER_SCRIPT),
         "update", "--module", "mla", "--name", "test-mla-from-base",
-        "--update", "kv_lora_rank=2048"
+        "--attributes", "kv_lora_rank=2048"
     ])
     
     if not success:
@@ -301,7 +301,7 @@ def test_update_model_nested():
     success, stdout, stderr = run_command([
         sys.executable, str(RUNNER_SCRIPT),
         "update", "--module", "model", "--name", "Test-Llama-3-8B",
-        "--update", "mlp.dim=16384"
+        "--attributes", "mlp.dim=16384"
     ])
     
     if not success:
@@ -395,7 +395,7 @@ def test_delete_layer():
     success, stdout, stderr = run_command([
         sys.executable, str(RUNNER_SCRIPT),
         "add", "--module", "mla", "--from-base", "Test-Custom1",
-        "--update", "name=test-mla-to-delete"
+        "--attributes", "name=test-mla-to-delete"
     ])
     
     if not success:
@@ -473,7 +473,7 @@ def test_error_handling():
     success, stdout, stderr = run_command([
         sys.executable, str(RUNNER_SCRIPT),
         "add", "--module", "mla", "--from-base", "Test-Custom1",
-        "--update", "name=Test-Custom1"  # Duplicate name
+        "--attributes", "name=Test-Custom1"  # Duplicate name
     ])
     
     # Should fail

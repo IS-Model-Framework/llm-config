@@ -10,7 +10,7 @@ def add_parse(subparsers):
     parser.add_argument('--from-file', type=str, help='')
     parser.add_argument('--from-base', type=str, help='')
     parser.add_argument('--name', type=str, help='')
-    parser.add_argument('--update', type=str, help='')
+    parser.add_argument('--attributes', type=str, help='')
     parser.add_argument('--base-layer', type=str, help='')
 
 
@@ -21,7 +21,7 @@ def update_parse(subparsers):
     parser.add_argument('--from-file', type=str, help='')
     parser.add_argument('--from-base', type=str, help='')
     parser.add_argument('--name', type=str, help='')
-    parser.add_argument('--update', type=str, help='')
+    parser.add_argument('--attributes', type=str, help='')
 
 
 def delete_parse(subparsers):
@@ -57,8 +57,8 @@ def parse_args():
 
 
 def execute_add(args):
-    from config.api import config_from_file, config_from_base, add_all, query, CONFIG_MAP
-    from config.base import create_session
+    from llm_config.config.api import config_from_file, config_from_base, add_all, query, CONFIG_MAP
+    from llm_config.config.base import create_session
     
     if not args.module:
         raise RuntimeError("--module parameter is required for add command")
@@ -77,14 +77,14 @@ def execute_add(args):
         add_all(configs) # add_all uses session.add_all, which is fine for transient objects
         print(f"Successfully added {len(configs)} config(s) from file {args.from_file}")
     elif args.from_base:
-        if not args.update:
-            raise RuntimeError("--update parameter is required when using --from-base")
+        if not args.attributes:
+            raise RuntimeError("--attributes parameter is required when using --from-base")
         
         # config_from_base returns a list of objects:
         # - The new ModelConfig (transient)
         # - Any new component configs (transient)
         # - Any existing component configs that were updated (detached persistent)
-        configs_to_process = config_from_base(args.module, args.from_base, args.update, args.base_layer)
+        configs_to_process = config_from_base(args.module, args.from_base, args.attributes, args.base_layer)
         
         config_type = CONFIG_MAP.get(args.module)
         # Find the main new config (e.g., ModelConfig) to get its name for the success message
@@ -106,13 +106,13 @@ def execute_add(args):
 
 
 def execute_update(args):
-    from config.api import update, query, CONFIG_MAP, _parse_update_string, _apply_updates, _check_dependencies_and_confirm
+    from llm_config.config.api import update, query, CONFIG_MAP, _parse_update_string, _apply_updates, _check_dependencies_and_confirm
     
     if not args.name:
         raise RuntimeError("--name parameter is required for update command")
     
-    if not args.update:
-        raise RuntimeError("--update parameter is required for update command")
+    if not args.attributes:
+        raise RuntimeError("--attributes parameter is required for update command")
     
     config_type = CONFIG_MAP.get(args.module)
     assert config_type is not None, f"`{args.module}` is not a valid module name"
@@ -126,7 +126,7 @@ def execute_update(args):
         raise ValueError(f"Config with name '{args.name}' not found")
     
     # Parse updates
-    updates = _parse_update_string(args.update)
+    updates = _parse_update_string(args.attributes)
     
     # Check if trying to update name (not recommended)
     if 'name' in updates:
@@ -155,7 +155,7 @@ def execute_update(args):
     _apply_updates(obj, updates, config_type)
     
     # Save to database
-    from config.base import create_session
+    from llm_config.config.base import create_session
     with create_session() as session:
         session.add(obj) # obj is already loaded and attached (or merged by query if eager_load was true)
         session.commit()
@@ -164,8 +164,8 @@ def execute_update(args):
 
 
 def execute_delete(args):
-    from config.api import delete, query, CONFIG_MAP, _find_dependent_models, _check_dependencies_and_confirm
-    from config.base import create_session
+    from llm_config.config.api import delete, query, CONFIG_MAP, _find_dependent_models, _check_dependencies_and_confirm
+    from llm_config.config.base import create_session
     
     if not args.name:
         raise RuntimeError("--name parameter is required for delete command")
@@ -216,7 +216,7 @@ def execute_delete(args):
 
 
 def execute_show(args):
-    from config.api import show_list, show, show_attributes, CONFIG_MAP
+    from llm_config.config.api import show_list, show, show_attributes, CONFIG_MAP
     
     if not args.module:
         raise RuntimeError("--module parameter is required for show command")
