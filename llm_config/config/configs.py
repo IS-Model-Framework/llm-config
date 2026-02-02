@@ -93,15 +93,15 @@ class ModelConfig(Base):
     embed_config_name: Mapped[str] = mapped_column(ForeignKey("EmbeddingConfig.name"), nullable=False)
     embed_config: Mapped["EmbeddingConfig"] = relationship(back_populates="model_config")
 
-    export_mla: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_mha: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_mlp: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_moe: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_rmsnorm: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_embed: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_transformer_body: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_model_computation: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_loss_computation: Mapped[bool] = mapped_column(Boolean, default=False)
+    export_mla: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_mha: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_mlp: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_moe: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_rmsnorm: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_embed: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_transformer_body: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_model_computation: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_loss_computation: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 # ==============================================================================
@@ -120,9 +120,9 @@ class AttentionConfig(Base):
     use_softmax: Mapped[bool] = mapped_column(Boolean, default=True)
     use_scale: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    export_qkv_projection: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_dot_attention: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_out_projection: Mapped[bool] = mapped_column(Boolean, default=False)
+    export_qkv_projection: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_dot_attention: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_out_projection: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 class MLAConfig(AttentionConfig):
@@ -167,8 +167,8 @@ class MLPConfig(Base):
     activations_in_float32: Mapped[bool] = mapped_column(Boolean, default=True)
     dropout: Mapped[float] = mapped_column(Float, nullable=True)
 
-    export_up_projection: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_down_projection: Mapped[bool] = mapped_column(Boolean, default=False)
+    export_up_projection: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_down_projection: Mapped[bool] = mapped_column(Boolean, default=True)
 
     model_config: Mapped[List["ModelConfig"]] = relationship(
         back_populates="mlp_config",
@@ -215,12 +215,12 @@ class MoEConfig(Base):
     gate_logit_sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True)
 
     # export attributes
-    export_routed_block: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_shared_block: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_gate_logit: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_permute: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_unpermute: Mapped[bool] = mapped_column(Boolean, default=False)
-    export_routed_mlp: Mapped[bool] = mapped_column(Boolean, default=False)
+    export_routed_block: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_shared_block: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_gate_logit: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_permute: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_unpermute: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_routed_mlp: Mapped[bool] = mapped_column(Boolean, default=True)
 
     model_config: Mapped[List["ModelConfig"]] = relationship(
         back_populates="moe_config",
