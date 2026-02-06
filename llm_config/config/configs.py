@@ -1,6 +1,6 @@
 import enum
 from typing import List
-from sqlalchemy import Integer, ForeignKey, JSON, Boolean, Enum, Float, String
+from sqlalchemy import Integer, ForeignKey, Boolean, Enum, Float, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.mutable import MutableList
 
@@ -238,7 +238,6 @@ class MoEConfig(Base):
             weight_dtype=self.weight_dtype,
             activations_in_float32=self.shared_experts_activations_in_float32,
             dropout=self.shared_experts_dropout,
-            model_config=self.model_config,
         )
 
 

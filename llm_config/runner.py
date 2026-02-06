@@ -164,7 +164,7 @@ def execute_update(args):
 
 
 def execute_delete(args):
-    from llm_config.config.api import delete, query, CONFIG_MAP, _find_dependent_models, _check_dependencies_and_confirm
+    from llm_config.config.api import delete, query, CONFIG_MAP, _check_dependencies_and_confirm
     from llm_config.config.base import create_session
     
     if not args.name:

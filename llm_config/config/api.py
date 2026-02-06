@@ -1,6 +1,8 @@
 import os
+import re
 import configparser
-from typing import Type, List, Optional, Dict, Any
+import ast
+from typing import Type, List, Optional, Dict, Any, Union
 from sqlalchemy import select
 
 from llm_config.config.configs import *
@@ -11,6 +13,7 @@ INDENTATION_STRIDE = 2
 indentation_size = 0
 
 CONFIG_MAP = {
+    'mesh': MeshConfig,
     'model': ModelConfig,
     'mla': MLAConfig,
     'mha': MHAConfig,
@@ -22,6 +25,7 @@ CONFIG_MAP = {
 
 }
 ATTRS_MAP = {
+    'mesh': 'mesh_config',
     'mla': 'mla_config',
     'mha': 'mha_config',
     'rope': 'rope_config',
@@ -31,6 +35,16 @@ ATTRS_MAP = {
     'norm': 'rmsnorm_config',
 }
 REVERSE_ATTRS_MAP = dict(zip(ATTRS_MAP.values(), ATTRS_MAP.keys()))
+ATTRS_NAME_MAP = {
+    'mesh': 'mesh_config_name',
+    'mla': 'mla_config_name',
+    'mha': 'mha_config_name',
+    'rope': 'rope_config_name',
+    'embed': 'embed_config_name',
+    'moe': 'moe_config_name',
+    'mlp': 'mlp_config_name',
+    'norm': 'rmsnorm_config_name',
+}
 INIT_MODEL_FILE = [
     'deepseek-v3-671B.ini',
     'llama-3-8B.ini',
@@ -113,7 +127,14 @@ def _parse_file(file: str, component_name: Optional[str]=None):
                     raise ValueError(f"Invalid enum value '{v}' for {k}. Valid values: {[e.value for e in enum_class]}")
                 attrs[k] = enum_value
             else:
-                attrs[k] = attr_type.python_type(v)
+                try:
+                    v = attr_type.python_type(v)
+                except:
+                    try:
+                        v = [ast.literal_eval(item) for item in v.strip("[]").split(",")]
+                    except:
+                        v = [item.strip() for item in v.strip("[]").split(",")]
+                attrs[k] = v
         components[section.lower()] = config_obj(**attrs)
     return components
 
@@ -252,16 +273,55 @@ def _parse_update_string(update_str: str) -> Dict[str, Any]:
     updates = {}
     if not update_str:
         return updates
-    
-    for item in update_str.split(','):
-        if '=' not in item:
-            continue
-        key, value = item.split('=', 1)
-        key = key.strip()
-        value = value.strip()
-        updates[key] = value
-    return updates
 
+    pairs = re.split(r',(?=[\w\d_]+=)', update_str)
+
+    def recursive_parse(value: str, is_list_context: bool = False) -> Any:
+        value = value.strip()
+
+        if (value.startswith('[') and value.endswith(']')) or \
+           (value.startswith('{') and value.endswith('}')) or \
+           (value.startswith('(') and value.endswith(')')):
+            inner = value[1:-1].strip()
+            if not inner:
+                return []
+
+            elements = []
+            bracket_level = 0
+            current_token = []
+
+            for char in inner:
+                if char in '[{':
+                    bracket_level += 1
+                elif char in ']}':
+                    bracket_level -= 1
+
+                if char == ',' and bracket_level == 0:
+                    elements.append("".join(current_token).strip())
+                    current_token = []
+                else:
+                    current_token.append(char)
+            elements.append("".join(current_token).strip())
+
+            return [recursive_parse(e, is_list_context=True) for e in elements]
+
+        if not is_list_context and ',' in value:
+            items = value.split(',')
+            return [recursive_parse(i.strip(), is_list_context=True) for i in items]
+
+        if not value:
+            return None if is_list_context else ""
+
+        return value
+
+    updates = {}
+    for pair in pairs:
+        if '=' not in pair:
+            continue
+        key, val_str = pair.split('=', 1)
+        updates[key.strip()] = recursive_parse(val_str.strip())
+
+    return updates
 
 def _get_nested_attribute(obj: Base, attr_path: str):
     """Get nested attribute value like 'mlp.dim' from object"""
@@ -288,10 +348,15 @@ def _get_nested_attribute(obj: Base, attr_path: str):
     return getattr(component_obj, attr_name)
 
 
+def _set_attr(obj: Base, attr_name: str, value: Any):
+    if getattr(obj, attr_name, None) != value:
+        setattr(obj, attr_name, value)
+
+
 def _set_nested_attribute(obj: Base, attr_path: str, value: Any):
     """Set nested attribute value like 'mlp.dim' on object"""
     if '.' not in attr_path:
-        setattr(obj, attr_path, value)
+        _set_attr(obj, attr_path, value)
         return
     
     parts = attr_path.split('.')
@@ -304,6 +369,12 @@ def _set_nested_attribute(obj: Base, attr_path: str, value: Any):
         raise ValueError(f"Unknown component name: {component_name}. Available components: {list(ATTRS_MAP.keys())}")
     
     component_obj = getattr(obj, attr_name_full, None)
+    if component_obj is None and attr_name == "name":
+        component_obj = query(value, CONFIG_MAP[component_name])
+        assert component_obj is not None
+        _set_attr(obj, ATTRS_NAME_MAP[component_name], value)
+        _set_attr(obj, attr_name_full, component_obj)
+        return
     if component_obj is None:
         raise ValueError(f"Component {component_name} not found in {obj.name}")
     
@@ -315,7 +386,7 @@ def _set_nested_attribute(obj: Base, attr_path: str, value: Any):
         converted_value = value
     
     # Set the value
-    setattr(component_obj, attr_name, converted_value)
+    _set_attr(component_obj, attr_name, converted_value)
 
 
 def _convert_value(value: str, attr_type):
@@ -335,7 +406,14 @@ def _convert_value(value: str, attr_type):
     elif python_type == bool:
         return value.lower() in ['true', '1', 'yes']
     else:
-        return python_type(value)
+        try:
+            v = python_type(value)
+        except:
+            try:
+                v = [ast.literal_eval(item) for item in value.strip("[]").split(",")]
+            except:
+                v = [item.strip() for item in value.strip("[]").split(",")]
+        return v
 
 
 def _apply_updates(obj: Base, updates: Dict[str, Any], config_type: Type[Base]):
