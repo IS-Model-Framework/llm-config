@@ -7,9 +7,9 @@ from llm_config.config.util import get_current_user
 
 ENGINE = None
 _DEFAULT_DB_NAME = "configs.sqlite"
-_SQL_PATH = os.environ.get('HLO_CONFIG_DB_PATH', os.path.dirname(__file__))
+_SQL_PATH = os.environ.get('LLM_CONFIG_DB_PATH', os.path.dirname(__file__))
 SQL_PATH = os.path.join(os.path.abspath(_SQL_PATH),
-                        os.environ.get('HLO_CONFIG_DB_NAME', _DEFAULT_DB_NAME)
+                        os.environ.get('LLM_CONFIG_DB_NAME', _DEFAULT_DB_NAME)
                         )
 
 def get_db_path():
