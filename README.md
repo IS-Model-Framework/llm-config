@@ -23,6 +23,12 @@ pip install git+https://github.com/IS-Model-Framework/llm-config.git@gemini_code
 
 ## Usage
 
+#### environment control
+| name               | usage   |
+|--------------------|---------|
+| LLM_CONFIG_DB_PATH | DB path |
+| LLM_CONFIG_DB_NAME | DB file name|
+
 #### add components
 ```bash
 usage: llm_config add [-h] [--module {model,mla,mha,rope,embed,moe,mlp,norm}] [--from-file FROM_FILE]
