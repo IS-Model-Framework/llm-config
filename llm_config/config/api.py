@@ -274,7 +274,7 @@ def _parse_update_string(update_str: str) -> Dict[str, Any]:
     if not update_str:
         return updates
 
-    pairs = re.split(r',(?=[\w\d_]+=)', update_str)
+    pairs = re.split(r',(?=\s*[\w.]+=(?![^\[]*\]))', update_str)
 
     def recursive_parse(value: str, is_list_context: bool = False) -> Any:
         value = value.strip()
@@ -449,7 +449,7 @@ def _find_dependent_models(component_name: str, component_type: Type[Base]) -> L
 def _confirm_action(message: str, warning_details: List[str]) -> bool:
     """Centralized function to ask for user confirmation, respecting test mode."""
     import os
-    if os.environ.get('HLO_CONFIG_TEST_MODE', 'false').lower() in ['1', 'true']:
+    if os.environ.get('LLM_CONFIG_TEST_MODE', 'false').lower() in ['1', 'true']:
         # In test mode, automatically confirm
         return True
 

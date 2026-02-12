@@ -35,7 +35,7 @@ def run_command(cmd, input_text=None, check=True):
     try:
         # Set environment variable for database name
         env = os.environ.copy()
-        env['HLO_CONFIG_DB_NAME'] = TEST_DB_NAME
+        env['LLM_CONFIG_DB_NAME'] = TEST_DB_NAME
         env["PYTHONPATH"] = f"{Path(__file__).parent.parent};{os.environ.get('PYTHONPATH', '')}"
         
         result = subprocess.run(
@@ -65,7 +65,7 @@ def setup_test_environment():
         TEST_DB_PATH.unlink()
         print(f"✓ Removed existing test database {TEST_DB_NAME}")
 
-    os.environ['HLO_CONFIG_TEST_MODE'] = 'true'
+    os.environ['LLM_CONFIG_TEST_MODE'] = 'true'
 
 
 def cleanup_test_environment():
