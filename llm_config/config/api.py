@@ -128,7 +128,10 @@ def _parse_file(file: str, component_name: Optional[str]=None):
                 attrs[k] = enum_value
             else:
                 try:
-                    v = attr_type.python_type(v)
+                    if issubclass(attr_type.python_type, bool):
+                        v = not str(v).lower() in ['0', 'false', 'no']
+                    else:
+                        v = attr_type.python_type(v)
                 except:
                     try:
                         v = [ast.literal_eval(item) for item in v.strip("[]").split(",")]
