@@ -190,9 +190,7 @@ def execute_delete(args):
             session.add(obj) # Re-add to session for deletion
             # Get all component references
             components_to_delete = []
-            for component_name, attr_name in [('mla', 'mla_config'), ('mha', 'mha_config'), 
-                                             ('mlp', 'mlp_config'), ('moe', 'moe_config'),
-                                             ('rope', 'rope_config'), ('norm', 'rmsnorm_config')]:
+            for component_name, attr_name in ATTRS_MAP.items():
                 component_obj = getattr(obj, attr_name, None)
                 if component_obj:
                     # Check if component is used by other models
