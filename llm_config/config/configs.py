@@ -40,6 +40,7 @@ class Hardware(enum.Enum):
 
 class Dtype(enum.Enum):
     FLOAT16 = "float16"
+    BFLOAT16 = "bfloat16"
     FLOAT32 = "float32"
     INT32 = "int32"
 
