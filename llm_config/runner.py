@@ -73,7 +73,7 @@ def execute_add(args):
         for cfg in configs:
             existing = query(cfg.name, config_type)
             if existing is not None:
-                raise ValueError(f"Config with name '{cfg.name}' already exists")
+                raise ValueError(f"Config with name '{cfg.name}' already exists: {existing}")
         add_all(configs) # add_all uses session.add_all, which is fine for transient objects
         print(f"Successfully added {len(configs)} config(s) from file {args.from_file}")
     elif args.from_base:

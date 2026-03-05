@@ -35,6 +35,7 @@ def run_command(cmd, input_text=None, check=True):
     try:
         # Set environment variable for database name
         env = os.environ.copy()
+        env['LLM_CONFIG_DB_PATH'] = str(CONFIG_DIR)
         env['LLM_CONFIG_DB_NAME'] = TEST_DB_NAME
         env["PYTHONPATH"] = f"{Path(__file__).parent.parent};{os.environ.get('PYTHONPATH', '')}"
         

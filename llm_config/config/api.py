@@ -2,8 +2,10 @@ import os
 import re
 import configparser
 import ast
-from typing import Type, List, Optional, Dict, Any, Union
+from inspect import signature
+from typing import Type, List, Optional, Dict, Any
 from sqlalchemy import select
+from sqlalchemy.inspection import inspect
 
 from llm_config.config.configs import *
 from llm_config.config.base import create_tables, create_session, Base, is_initialize
@@ -483,8 +485,28 @@ def _clone_obj(obj: Base):
     if obj is None:
         return None
     cls = obj.__class__
-    data = {c.name: getattr(obj, c.name) for c in cls.__table__.columns if c.name != 'id'}
-    new_obj = cls(**data)
+    mapper = inspect(cls)
+
+    init_data = {}
+    other_data = {}
+
+    init_arg_names = list(signature(cls.__init__).parameters.keys())
+    for col in mapper.columns:
+        if col.primary_key:
+            continue
+
+        value = getattr(obj, col.key)
+
+        if col.name in init_arg_names:
+            init_data[col.key] = value
+        else:
+            other_data[col.key] = value
+
+    new_obj = cls(**init_data)
+
+    for k, v in other_data.items():
+        setattr(new_obj, k, v)
+
     return new_obj
 
 

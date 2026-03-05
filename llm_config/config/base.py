@@ -1,6 +1,6 @@
 import os
 from sqlalchemy import create_engine, String
-from sqlalchemy.orm import DeclarativeBase, Session, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass, Session, Mapped, mapped_column
 
 from llm_config.config.util import get_current_user
 
@@ -21,12 +21,12 @@ def get_db_name() -> str:
     return os.path.basename(SQL_PATH)
 
 
-class Base(DeclarativeBase):
+class Base(DeclarativeBase, MappedAsDataclass):
     __abstract__ = True
 
-    id: Mapped[int] = mapped_column(primary_key=True,  autoincrement="auto")
+    id: Mapped[int] = mapped_column(primary_key=True,  autoincrement="auto", init=False)
     name: Mapped[str] = mapped_column(String(30), unique=True)
-    user: Mapped[str] = mapped_column(String(30), default=get_current_user)
+    user: Mapped[str] = mapped_column(String(30), default=get_current_user, init=False)
 
     def __repr__(self):
         attrs = []
