@@ -1,5 +1,5 @@
 import enum
-from typing import List
+from typing import List, Optional
 from sqlalchemy import Integer, ForeignKey, Boolean, Enum, Float, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.mutable import MutableList
@@ -48,14 +48,16 @@ class Dtype(enum.Enum):
 class MeshConfig(Base):
     __tablename__ = "MeshConfig"
 
-    axes_name: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default=None)
-    shape: Mapped[List[int]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default=None)
-    hardware: Mapped[Hardware] = mapped_column(Enum(Hardware), default=Hardware.CPU)
-
     model_config: Mapped[List["ModelConfig"]] = relationship(
         back_populates="mesh_config",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        init=False,
+        lazy="immediate"
     )
+
+    axes_name: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=lambda: None)
+    shape: Mapped[List[int]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=lambda: None)
+    hardware: Mapped[Hardware] = mapped_column(Enum(Hardware), default_factory=lambda: Hardware.CPU)
 
 
 # ==============================================================================
@@ -68,41 +70,42 @@ class ModelConfig(Base):
     max_seq_len: Mapped[int] = mapped_column(Integer)
     vocab_size: Mapped[int] = mapped_column(Integer)
 
-    num_layers: Mapped[int] = mapped_column(Integer, default=1)
-    n_dense_layers: Mapped[int] = mapped_column(Integer, default=0)
-    batch_size: Mapped[int] = mapped_column(Integer, default=1)
-    tie_word_embeddings: Mapped[bool] = mapped_column(Boolean, default=True)
-    assemble: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True)
-    activation_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
-    data_sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True)
-    output_sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True)
+    assemble: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=list)
+    data_sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=list)
+    output_sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=list)
 
-    mesh_config_name: Mapped[str] = mapped_column(ForeignKey("MeshConfig.name"), nullable=True)
-    mesh_config: Mapped["MeshConfig"] = relationship(back_populates="model_config")
-    mla_config_name: Mapped[str] = mapped_column(ForeignKey("MLAConfig.name"), nullable=True)
-    mla_config: Mapped["MLAConfig"] = relationship(back_populates="model_config")
-    mha_config_name: Mapped[str] = mapped_column(ForeignKey("MHAConfig.name"), nullable=True)
-    mha_config: Mapped["MHAConfig"] = relationship(back_populates="model_config")
-    mlp_config_name: Mapped[str] = mapped_column(ForeignKey("MLPConfig.name"), nullable=True)
-    mlp_config: Mapped["MLPConfig"] = relationship(back_populates="model_config")
-    moe_config_name: Mapped[str] = mapped_column(ForeignKey("MoEConfig.name"), nullable=True)
-    moe_config: Mapped["MoEConfig"] = relationship(back_populates="model_config")
-    rmsnorm_config_name: Mapped[str] = mapped_column(ForeignKey("RMSNormConfig.name"), nullable=True)
-    rmsnorm_config: Mapped["RMSNormConfig"] = relationship(back_populates="model_config")
-    rope_config_name: Mapped[str] = mapped_column(ForeignKey("RopeConfig.name"), nullable=True)
-    rope_config: Mapped["RopeConfig"] = relationship(back_populates="model_config")
-    embed_config_name: Mapped[str] = mapped_column(ForeignKey("EmbeddingConfig.name"), nullable=False)
-    embed_config: Mapped["EmbeddingConfig"] = relationship(back_populates="model_config")
+    mesh_config_name: Mapped[str] = mapped_column(ForeignKey("MeshConfig.name"), nullable=True, default_factory=lambda: None)
+    mesh_config: Mapped["MeshConfig"] = relationship(back_populates="model_config", init=False, lazy="immediate")
+    mla_config_name: Mapped[str] = mapped_column(ForeignKey("MLAConfig.name"), nullable=True, default_factory=lambda: None)
+    mla_config: Mapped["MLAConfig"] = relationship(back_populates="model_config", init=False, lazy="immediate")
+    mha_config_name: Mapped[str] = mapped_column(ForeignKey("MHAConfig.name"), nullable=True, default_factory=lambda: None)
+    mha_config: Mapped["MHAConfig"] = relationship(back_populates="model_config", init=False, lazy="immediate")
+    mlp_config_name: Mapped[str] = mapped_column(ForeignKey("MLPConfig.name"), nullable=True, default_factory=lambda: None)
+    mlp_config: Mapped["MLPConfig"] = relationship(back_populates="model_config", init=False, lazy="immediate")
+    moe_config_name: Mapped[str] = mapped_column(ForeignKey("MoEConfig.name"), nullable=True, default_factory=lambda: None)
+    moe_config: Mapped["MoEConfig"] = relationship(back_populates="model_config", init=False, lazy="immediate")
+    rmsnorm_config_name: Mapped[str] = mapped_column(ForeignKey("RMSNormConfig.name"), nullable=True, default_factory=lambda: None)
+    rmsnorm_config: Mapped["RMSNormConfig"] = relationship(back_populates="model_config", init=False, lazy="immediate")
+    rope_config_name: Mapped[str] = mapped_column(ForeignKey("RopeConfig.name"), nullable=True, default_factory=lambda: None)
+    rope_config: Mapped["RopeConfig"] = relationship(back_populates="model_config", init=False, lazy="immediate")
+    embed_config_name: Mapped[str] = mapped_column(ForeignKey("EmbeddingConfig.name"), nullable=True, default_factory=lambda: None)
+    embed_config: Mapped["EmbeddingConfig"] = relationship(back_populates="model_config", init=False, lazy="immediate")
 
-    export_mla: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_mha: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_mlp: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_moe: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_rmsnorm: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_embed: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_transformer_body: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_model_computation: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_loss_computation: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_mlp: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_moe: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_rmsnorm: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_embed: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_transformer_body: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_model_computation: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_loss_computation: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_mla: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_mha: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+
+    num_layers: Mapped[int] = mapped_column(Integer, default_factory=lambda: 1)
+    n_dense_layers: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
+    batch_size: Mapped[int] = mapped_column(Integer, default_factory=lambda: 1)
+    tie_word_embeddings: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    activation_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
 
 
 # ==============================================================================
@@ -113,43 +116,47 @@ class AttentionConfig(Base):
 
     num_query_heads: Mapped[int] = mapped_column(Integer)
     num_kv_heads: Mapped[int] = mapped_column(Integer)
-    dropout: Mapped[float] = mapped_column(Float, nullable=True)
-    out_projection_use_bias: Mapped[bool] = mapped_column(Boolean, default=False)
-    sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True)
-    matmul_precision: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
-    weight_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
-    use_softmax: Mapped[bool] = mapped_column(Boolean, default=True)
-    use_scale: Mapped[bool] = mapped_column(Boolean, default=True)
+    dropout: Mapped[float] = mapped_column(Float, nullable=True, default_factory=lambda: None)
+    sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=lambda: None)
+    out_projection_use_bias: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: False)
+    matmul_precision: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
+    weight_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
+    use_softmax: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    use_scale: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
 
-    export_qkv_projection: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_dot_attention: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_out_projection: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_qkv_projection: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_dot_attention: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_out_projection: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
 
 
 class MLAConfig(AttentionConfig):
     __tablename__ = "MLAConfig"
 
-    q_lora_rank: Mapped[int] = mapped_column(Integer)
-    kv_lora_rank: Mapped[int] = mapped_column(Integer)
-    qk_nope_head_dim: Mapped[int] = mapped_column(Integer)
-    qk_rope_head_dim: Mapped[int] = mapped_column(Integer)
-    v_head_dim: Mapped[int] = mapped_column(Integer)
-
-    model_config: Mapped[List["ModelConfig"]] = relationship(
+    model_config: Mapped[Optional[List["ModelConfig"]]] = relationship(
         back_populates="mla_config",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        init=False,
+        lazy = "immediate"
     )
+
+    q_lora_rank: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
+    kv_lora_rank: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
+    qk_nope_head_dim: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
+    qk_rope_head_dim: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
+    v_head_dim: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
 
 
 class MHAConfig(AttentionConfig):
     __tablename__ = "MHAConfig"
 
-    head_dim: Mapped[int] = mapped_column(Integer, nullable=True)
-
-    model_config: Mapped[List["ModelConfig"]] = relationship(
+    model_config: Mapped[Optional[List["ModelConfig"]]] = relationship(
         back_populates="mha_config",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        init=False,
+        lazy="immediate"
     )
+
+    head_dim: Mapped[int] = mapped_column(Integer, nullable=True, default_factory=lambda: None)
 
 
 # ==============================================================================
@@ -158,75 +165,79 @@ class MHAConfig(AttentionConfig):
 class MLPConfig(Base):
     __tablename__ = "MLPConfig"
 
-    dim: Mapped[int] = mapped_column(Integer)
-    activation: Mapped[Activation] = mapped_column(Enum(Activation))
-    use_bias: Mapped[bool] = mapped_column(Boolean, default=False)
-    sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True)
-    use_gate: Mapped[bool] = mapped_column(Boolean, default=False)
-    matmul_precision: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
-    weight_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
-    activations_in_float32: Mapped[bool] = mapped_column(Boolean, default=True)
-    dropout: Mapped[float] = mapped_column(Float, nullable=True)
-
-    export_up_projection: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_down_projection: Mapped[bool] = mapped_column(Boolean, default=True)
-
-    model_config: Mapped[List["ModelConfig"]] = relationship(
+    model_config: Mapped[Optional[List["ModelConfig"]]] = relationship(
         back_populates="mlp_config",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        init=False,
+        lazy="immediate"
     )
+
+    dim: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
+    activation: Mapped[Activation] = mapped_column(Enum(Activation), default_factory=lambda: Activation.SiLU)
+    dropout: Mapped[float] = mapped_column(Float, nullable=True, default_factory=lambda: None)
+    sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=lambda: None)
+    use_bias: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: False)
+    use_gate: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: False)
+    matmul_precision: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
+    weight_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
+    activations_in_float32: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+
+    export_up_projection: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_down_projection: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
 
 
 class MoEConfig(Base):
     __tablename__ = "MoEConfig"
 
-    # common attributes
-    matmul_precision: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
-    weight_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
+    model_config: Mapped[Optional[List["ModelConfig"]]] = relationship(
+        back_populates="moe_config",
+        cascade="all, delete-orphan",
+        init=False,
+        lazy="immediate"
+    )
 
     # routed experts attributes
-    n_routed_experts: Mapped[int] = mapped_column(Integer)
-    n_activated_experts: Mapped[int] = mapped_column(Integer)
-    routed_experts_use_bias: Mapped[bool] = mapped_column(Boolean, default=False)
-    routed_experts_dim: Mapped[int] = mapped_column(Integer)
-    routed_experts_activation: Mapped[Activation] = mapped_column(Enum(Activation))
-    aux_loss_alpha: Mapped[float] = mapped_column(Float, nullable=True)
-    norm_topk_prob: Mapped[bool] = mapped_column(Boolean, nullable=True)
-    score_func: Mapped[Activation] = mapped_column(Enum(Activation), nullable=True)
-    route_scale: Mapped[float] = mapped_column(Float, nullable=True)
-    seq_aux: Mapped[bool] = mapped_column(Boolean, nullable=True)
-
-    # gmm attributes
-    tile_batch_seq: Mapped[int] = mapped_column(Integer, nullable=False, default=512)
-    tile_activation_dim: Mapped[int] = mapped_column(Integer, nullable=False, default=1024)
-    tile_weight_dim: Mapped[int] = mapped_column(Integer, nullable=False, default=1024)
-
-    # shared experts attributes
-    n_shared_experts: Mapped[int] = mapped_column(Integer, default=0)
-    shared_experts_dim: Mapped[int] = mapped_column(Integer)
-    shared_experts_activation: Mapped[Activation] = mapped_column(Enum(Activation))
-    shared_experts_use_bias: Mapped[bool] = mapped_column(Boolean, default=False)
-    shared_experts_use_gate: Mapped[bool] = mapped_column(Boolean, default=False)
-    shared_experts_activations_in_float32: Mapped[bool] = mapped_column(Boolean, default=True)
-    shared_experts_dropout: Mapped[float] = mapped_column(Float, nullable=True)
+    n_routed_experts: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
+    n_activated_experts: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
+    routed_experts_dim: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
+    routed_experts_activation: Mapped[Activation] = mapped_column(Enum(Activation), default_factory=lambda: Activation.SiLU)
+    aux_loss_alpha: Mapped[float] = mapped_column(Float, nullable=True, default_factory=lambda: None)
+    norm_topk_prob: Mapped[bool] = mapped_column(Boolean, nullable=True, default_factory=lambda: None)
+    score_func: Mapped[Activation] = mapped_column(Enum(Activation), nullable=True, default_factory=lambda: None)
+    route_scale: Mapped[float] = mapped_column(Float, nullable=True, default_factory=lambda: None)
+    seq_aux: Mapped[bool] = mapped_column(Boolean, nullable=True, default_factory=lambda: None)
+    routed_experts_use_bias: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: False)
 
     # sharding attributes
-    shared_experts_sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True)
-    routed_experts_sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True)
-    gate_logit_sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True)
+    shared_experts_sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=lambda: None)
+    routed_experts_sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=lambda: None)
+    gate_logit_sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=lambda: None)
+
+    # shared experts attributes
+    shared_experts_dim: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
+    n_shared_experts: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
+    shared_experts_activation: Mapped[Activation] = mapped_column(Enum(Activation), default_factory=lambda: False)
+    shared_experts_use_bias: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: False)
+    shared_experts_use_gate: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: False)
+    shared_experts_activations_in_float32: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    shared_experts_dropout: Mapped[float] = mapped_column(Float, default_factory=lambda: True)
+
+    # gmm attributes
+    tile_batch_seq: Mapped[int] = mapped_column(Integer, nullable=False, default_factory=lambda: 512)
+    tile_activation_dim: Mapped[int] = mapped_column(Integer, nullable=False, default_factory=lambda: 1024)
+    tile_weight_dim: Mapped[int] = mapped_column(Integer, nullable=False, default_factory=lambda: 1024)
 
     # export attributes
-    export_routed_block: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_shared_block: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_gate_logit: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_permute: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_unpermute: Mapped[bool] = mapped_column(Boolean, default=True)
-    export_routed_mlp: Mapped[bool] = mapped_column(Boolean, default=True)
+    export_routed_block: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_shared_block: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_gate_logit: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_permute: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_unpermute: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_routed_mlp: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
 
-    model_config: Mapped[List["ModelConfig"]] = relationship(
-        back_populates="moe_config",
-        cascade="all, delete-orphan"
-    )
+    # common attributes
+    matmul_precision: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
+    weight_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
 
     def shared_experts_to_mlp(self) -> MLPConfig:
         return MLPConfig(
@@ -248,34 +259,38 @@ class MoEConfig(Base):
 class RopeConfig(Base):
     __tablename__ = "RopeConfig"
 
-    theta: Mapped[float] = mapped_column(Float)
-    type: Mapped[RopeType] = mapped_column(Enum(RopeType))
-    beta_fast: Mapped[int] = mapped_column(Integer, nullable=True)
-    beta_slow: Mapped[int] = mapped_column(Integer, nullable=True)
-    factor: Mapped[int] = mapped_column(Integer, nullable=True)
-    original_seq_len: Mapped[int] = mapped_column(Integer, nullable=True)
-    mscale: Mapped[float] = mapped_column(Float, nullable=True)
-    mscale_all_dim: Mapped[float] = mapped_column(Float, nullable=True)
-
-    min_timescale: Mapped[Integer] = mapped_column(Float, nullable=False, default=1)
-    max_timescale: Mapped[Integer] = mapped_column(Float, nullable=False, default=10000)
-
-    model_config: Mapped[List["ModelConfig"]] = relationship(
+    model_config: Mapped[Optional[List["ModelConfig"]]] = relationship(
         back_populates="rope_config",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        init=False,
+        lazy="immediate"
     )
+
+    theta: Mapped[float] = mapped_column(Float, default_factory=lambda: 0.0)
+    type: Mapped[RopeType] = mapped_column(Enum(RopeType), default_factory=lambda: RopeType.ROPE)
+    beta_fast: Mapped[int] = mapped_column(Integer, nullable=True, default_factory=lambda: None)
+    beta_slow: Mapped[int] = mapped_column(Integer, nullable=True, default_factory=lambda: None)
+    factor: Mapped[int] = mapped_column(Integer, nullable=True, default_factory=lambda: None)
+    original_seq_len: Mapped[int] = mapped_column(Integer, nullable=True, default_factory=lambda: None)
+    mscale: Mapped[float] = mapped_column(Float, nullable=True, default_factory=lambda: None)
+    mscale_all_dim: Mapped[float] = mapped_column(Float, nullable=True, default_factory=lambda: None)
+
+    min_timescale: Mapped[Integer] = mapped_column(Float, nullable=False, default_factory=lambda: 1)
+    max_timescale: Mapped[Integer] = mapped_column(Float, nullable=False, default_factory=lambda: 10000)
 
 
 class EmbeddingConfig(Base):
     __tablename__ = "EmbeddingConfig"
 
-    sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True)
-    use_iota_embed: Mapped[bool] = mapped_column(Boolean, default=True)
-
-    model_config: Mapped[List["ModelConfig"]] = relationship(
+    model_config: Mapped[Optional[List["ModelConfig"]]] = relationship(
         back_populates="embed_config",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        init=False,
+        lazy="immediate"
     )
+
+    sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=lambda: None)
+    use_iota_embed: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
 
 
 # ==============================================================================
@@ -284,11 +299,13 @@ class EmbeddingConfig(Base):
 class RMSNormConfig(Base):
     __tablename__ = "RMSNormConfig"
 
-    epsilon: Mapped[float] = mapped_column(Float, default=1.e-05)
-    sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True)
-    weight_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
-
-    model_config: Mapped[List["ModelConfig"]] = relationship(
+    model_config: Mapped[Optional[List["ModelConfig"]]] = relationship(
         back_populates="rmsnorm_config",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        init=False,
+        lazy="immediate"
     )
+
+    epsilon: Mapped[float] = mapped_column(Float, default_factory=lambda: 1.e-05)
+    sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=lambda: None)
+    weight_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
