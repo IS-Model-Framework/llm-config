@@ -69,8 +69,13 @@ class ModelConfig(Base):
     emb_dim: Mapped[int] = mapped_column(Integer, comment="The hidden size for the model.")
     max_seq_len: Mapped[int] = mapped_column(Integer)
     vocab_size: Mapped[int] = mapped_column(Integer)
-
+    num_layers: Mapped[int] = mapped_column(Integer, default_factory=lambda: 1)
+    n_dense_layers: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
+    batch_size: Mapped[int] = mapped_column(Integer, default_factory=lambda: 1)
+    tie_word_embeddings: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    activation_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
     assemble: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=list)
+
     data_sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=list)
     output_sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=list)
 
@@ -101,11 +106,8 @@ class ModelConfig(Base):
     export_mla: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
     export_mha: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
 
-    num_layers: Mapped[int] = mapped_column(Integer, default_factory=lambda: 1)
-    n_dense_layers: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
-    batch_size: Mapped[int] = mapped_column(Integer, default_factory=lambda: 1)
-    tie_word_embeddings: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
-    activation_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
+    def __hash__(self):
+        return hash(self.__repr__())
 
 
 # ==============================================================================
@@ -195,18 +197,22 @@ class MoEConfig(Base):
         init=False,
         lazy="immediate"
     )
+    # common attributes
+    matmul_precision: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
+    weight_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
+
 
     # routed experts attributes
     n_routed_experts: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
     n_activated_experts: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
     routed_experts_dim: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
     routed_experts_activation: Mapped[Activation] = mapped_column(Enum(Activation), default_factory=lambda: Activation.SiLU)
+    routed_experts_use_bias: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: False)
     aux_loss_alpha: Mapped[float] = mapped_column(Float, nullable=True, default_factory=lambda: None)
     norm_topk_prob: Mapped[bool] = mapped_column(Boolean, nullable=True, default_factory=lambda: None)
     score_func: Mapped[Activation] = mapped_column(Enum(Activation), nullable=True, default_factory=lambda: None)
     route_scale: Mapped[float] = mapped_column(Float, nullable=True, default_factory=lambda: None)
     seq_aux: Mapped[bool] = mapped_column(Boolean, nullable=True, default_factory=lambda: None)
-    routed_experts_use_bias: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: False)
 
     # sharding attributes
     shared_experts_sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=lambda: None)
@@ -235,9 +241,6 @@ class MoEConfig(Base):
     export_unpermute: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
     export_routed_mlp: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
 
-    # common attributes
-    matmul_precision: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
-    weight_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
 
     def shared_experts_to_mlp(self) -> MLPConfig:
         return MLPConfig(
