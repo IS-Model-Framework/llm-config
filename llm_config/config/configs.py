@@ -1,6 +1,6 @@
 import enum
 from typing import List, Optional
-from sqlalchemy import Integer, ForeignKey, Boolean, Enum, Float, JSON
+from sqlalchemy import Integer, ForeignKey, Boolean, Enum, Float, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.mutable import MutableList
 
@@ -147,6 +147,12 @@ class MLAConfig(AttentionConfig):
     qk_rope_head_dim: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
     v_head_dim: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
 
+    use_indexer: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: False)
+    scale_fmt: Mapped[str] = mapped_column(String(10), nullable=True, default_factory=lambda: None)
+    index_n_heads: Mapped[int] = mapped_column(Integer, nullable=True, default_factory=lambda: None)
+    index_head_dim: Mapped[int] = mapped_column(Integer, nullable=True, default_factory=lambda: None)
+    index_topk: Mapped[int] = mapped_column(Integer, nullable=True, default_factory=lambda: None)
+
 
 class MHAConfig(AttentionConfig):
     __tablename__ = "MHAConfig"
@@ -222,11 +228,11 @@ class MoEConfig(Base):
     # shared experts attributes
     shared_experts_dim: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
     n_shared_experts: Mapped[int] = mapped_column(Integer, default_factory=lambda: 0)
-    shared_experts_activation: Mapped[Activation] = mapped_column(Enum(Activation), default_factory=lambda: False)
+    shared_experts_activation: Mapped[Activation] = mapped_column(Enum(Activation), default_factory=lambda: Activation.SiLU)
     shared_experts_use_bias: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: False)
     shared_experts_use_gate: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: False)
     shared_experts_activations_in_float32: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
-    shared_experts_dropout: Mapped[float] = mapped_column(Float, default_factory=lambda: True)
+    shared_experts_dropout: Mapped[float] = mapped_column(Float, default_factory=lambda: None)
 
     # gmm attributes
     tile_batch_seq: Mapped[int] = mapped_column(Integer, nullable=False, default_factory=lambda: 512)
@@ -294,6 +300,7 @@ class EmbeddingConfig(Base):
 
     sharding: Mapped[List[str]] = mapped_column(MutableList.as_mutable(JSON), nullable=True, default_factory=lambda: None)
     use_iota_embed: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    attend_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default_factory=lambda: Dtype.FLOAT32)
 
 
 # ==============================================================================
