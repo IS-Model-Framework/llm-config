@@ -25,6 +25,10 @@ typing = [
     "mypy>=1.18.2",
 ]
 
+dev = [
+    "llm-config[lint,typing]",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
