@@ -100,6 +100,7 @@ class ModelConfig(Base):
     export_moe: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
     export_rmsnorm: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
     export_embed: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_lm_head: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
     export_transformer_body: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
     export_model_computation: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
     export_loss_computation: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
