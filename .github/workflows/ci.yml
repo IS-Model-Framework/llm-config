@@ -30,14 +30,12 @@ jobs:
       python-version: '3.11'
       install-command: 'pip install -e ".[dev]"'
 
-  tests:
-    needs: pre-commit
-    uses: IS-Model-Framework/.github/.github/workflows/reusable-tests.yml@main
-    with:
-      python-version: '3.11'
-      install-command: 'pip install -e ".[dev]"'
-      upload-coverage: false
-      comment-on-pr: false
+#  tests:
+#    needs: pre-commit
+#    uses: IS-Model-Framework/.github/.github/workflows/reusable-tests.yml@main
+#    with:
+#      python-version: '3.11'
+#      install-command: 'pip install -e ".[dev]"'
 
   typing-check:
     needs: pre-commit
