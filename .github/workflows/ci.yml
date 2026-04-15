@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
+jobs:
+  pre-commit:
+    uses: IS-Model-Framework/.github/.github/workflows/reusable-precommit.yml@main
+    with:
+      python-version: '3.11'
+
+  commit-check:
+    needs: pre-commit
+    uses: IS-Model-Framework/.github/.github/workflows/reusable-commit-check.yml@main
+    with:
+      python-version: '3.11'
+
+  format-check:
+    needs: pre-commit
+    uses: IS-Model-Framework/.github/.github/workflows/reusable-format-check.yml@main
+    with:
+      python-version: '3.11'
+      install-command: 'pip install -e ".[dev]"'
+
+#  tests:
+#    needs: pre-commit
+#    uses: IS-Model-Framework/.github/.github/workflows/reusable-tests.yml@main
+#    with:
+#      python-version: '3.11'
+#      install-command: 'pip install -e ".[dev]"'
+
+  typing-check:
+    needs: pre-commit
+    uses: IS-Model-Framework/.github/.github/workflows/reusable-type-check.yml@main
+    with:
+      python-version: '3.11'
+      install-command: 'pip install -e ".[dev]"'
