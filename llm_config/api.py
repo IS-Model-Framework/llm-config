@@ -69,7 +69,9 @@ def _parse_file(file: str, component_name: Optional[str]=None):
         else:
             # For model configs, section names like [Model], [MHA], [MLP] etc.
             config_obj = CONFIG_MAP.get(section.lower())
-        assert config_obj is not None, f"Unknown config type: {component_name or section.lower()}. Available types: {list(CONFIG_MAP.keys())}"
+        if config_obj is None:
+            raise ValueError(
+                f"Unknown config type: {component_name or section.lower()}. Available types: {list(CONFIG_MAP.keys())}")
         attrs = {}
         for k, v in config.items(section):
             attr_column = getattr(config_obj, k)
