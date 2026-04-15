@@ -36,7 +36,8 @@ jobs:
     with:
       python-version: '3.11'
       install-command: 'pip install -e ".[dev]"'
-      skip-tests: true
+      upload-coverage: false
+      comment-on-pr: false
 
   typing-check:
     needs: pre-commit
