@@ -234,7 +234,7 @@ class MoEConfig(Base):
     shared_experts_use_bias: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: False)
     shared_experts_use_gate: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: False)
     shared_experts_activations_in_float32: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
-    shared_experts_dropout: Mapped[float] = mapped_column(Float, default_factory=lambda: None)
+    shared_experts_dropout: Mapped[float] = mapped_column(Float, nullable=True, default_factory=lambda: None)
 
     # gmm attributes
     tile_batch_seq: Mapped[int] = mapped_column(Integer, nullable=False, default_factory=lambda: 512)
