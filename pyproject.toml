@@ -34,6 +34,9 @@ dev = [
     "llm-config[lint,typing,test]",
 ]
 
+[tool.coverage.run]
+disable_warnings = ["no-data-collected"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
