@@ -393,6 +393,7 @@ class MoEConfig(Base):
 
   def shared_experts_to_mlp(self) -> MLPConfig:
     return MLPConfig(
+      name=self.name,
       dim=self.shared_experts_dim * self.n_shared_experts,
       activation=self.shared_experts_activation,
       use_bias=self.shared_experts_use_bias,

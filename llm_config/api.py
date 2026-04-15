@@ -51,7 +51,7 @@ ATTRS_NAME_MAP = {
 }
 
 
-def comments_detail(config_type: type[Base]) -> str:
+def comments_detail(config_type: Base) -> str:
   comments = [f"{config_type.__name__}:"]
   global indentation_size
   indentation_size += INDENTATION_STRIDE
@@ -91,27 +91,27 @@ def _parse_file(file: str, component_name: str | None = None):
         enum_class = attr_type.enum_class
         # Find enum by value
         enum_value = None
-        for enum_item in enum_class:
+        for enum_item in enum_class: # type: ignore[union-attr]
           if enum_item.value.lower() == v.lower():
             enum_value = enum_item
             break
         if enum_value is None:
           raise ValueError(
             f"Invalid enum value '{v}' for {k}. Valid values: "
-            f"{[e.value for e in enum_class]}"
+            f"{[e.value for e in enum_class]}" # type: ignore[union-attr]
           )
         attrs[k] = enum_value
       else:
         try:
           if issubclass(attr_type.python_type, bool):
-            v = str(v).lower() not in ["0", "false", "no"]
+            v = str(v).lower() not in ["0", "false", "no"] # type: ignore[assignment]
           else:
-            v = attr_type.python_type(v)
+            v = attr_type.python_type(v) # type: ignore[assignment]
         except (ValueError, TypeError):
           try:
-            v = [ast.literal_eval(item) for item in v.strip("[]").split(",")]
+            v = [ast.literal_eval(item) for item in v.strip("[]").split(",")] # type: ignore[assignment]
           except (ValueError, SyntaxError):
-            v = [item.strip() for item in v.strip("[]").split(",")]
+            v = [item.strip() for item in v.strip("[]").split(",")] # type: ignore[assignment]
         attrs[k] = v
     components[section.lower()] = config_obj(**attrs)
   return components
@@ -132,7 +132,7 @@ def _construct_config(components):
 def show_attributes(component_name: str):
   config_type = CONFIG_MAP.get(component_name)
   assert config_type is not None, f"`{component_name}` is not a valid config name"
-  attributes = comments_detail(config_type)
+  attributes = comments_detail(config_type) # type: ignore[assignment,arg-type]
   print(attributes)
 
 
