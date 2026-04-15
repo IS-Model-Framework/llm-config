@@ -16,9 +16,6 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-[project.scripts]
-llm_config = "llm_config.runner:main"
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

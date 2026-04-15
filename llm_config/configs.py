@@ -4,7 +4,7 @@ from sqlalchemy import Integer, ForeignKey, Boolean, Enum, Float, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.mutable import MutableList
 
-from llm_config.config.base import Base
+from llm_config.base import Base
 
 
 __all__ = [
@@ -105,6 +105,7 @@ class ModelConfig(Base):
     export_loss_computation: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
     export_mla: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
     export_mha: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
+    export_whole_computation: Mapped[bool] = mapped_column(Boolean, default_factory=lambda: True)
 
     def __hash__(self):
         return hash(self.__repr__())
