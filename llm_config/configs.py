@@ -163,9 +163,7 @@ class AttentionConfig(Base):
 
   num_query_heads: Mapped[int] = mapped_column(Integer)
   num_kv_heads: Mapped[int] = mapped_column(Integer)
-  dropout: Mapped[float] = mapped_column(
-    Float, nullable=True, default=None
-  )
+  dropout: Mapped[float] = mapped_column(Float, nullable=True, default=None)
   sharding: Mapped[list[str]] = mapped_column(
     MutableList.as_mutable(JSON), nullable=True, default=None
   )
@@ -197,18 +195,10 @@ class MLAConfig(AttentionConfig):
   v_head_dim: Mapped[int] = mapped_column(Integer, default=0)
 
   use_indexer: Mapped[bool] = mapped_column(Boolean, default=False)
-  scale_fmt: Mapped[str] = mapped_column(
-    String(10), nullable=True, default=None
-  )
-  index_n_heads: Mapped[int] = mapped_column(
-    Integer, nullable=True, default=None
-  )
-  index_head_dim: Mapped[int] = mapped_column(
-    Integer, nullable=True, default=None
-  )
-  index_topk: Mapped[int] = mapped_column(
-    Integer, nullable=True, default=None
-  )
+  scale_fmt: Mapped[str] = mapped_column(String(10), nullable=True, default=None)
+  index_n_heads: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
+  index_head_dim: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
+  index_topk: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
 
 
 class MHAConfig(AttentionConfig):
@@ -221,9 +211,7 @@ class MHAConfig(AttentionConfig):
     lazy="immediate",
   )
 
-  head_dim: Mapped[int] = mapped_column(
-    Integer, nullable=True, default=None
-  )
+  head_dim: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
 
 
 # ==============================================================================
@@ -240,10 +228,10 @@ class MLPConfig(Base):
   )
 
   dim: Mapped[int] = mapped_column(Integer, default=0)
-  activation: Mapped[Activation] = mapped_column(Enum(Activation), default=Activation.SiLU)
-  dropout: Mapped[float] = mapped_column(
-    Float, nullable=True, default=None
+  activation: Mapped[Activation] = mapped_column(
+    Enum(Activation), default=Activation.SiLU
   )
+  dropout: Mapped[float] = mapped_column(Float, nullable=True, default=None)
   sharding: Mapped[list[str]] = mapped_column(
     MutableList.as_mutable(JSON), nullable=True, default=None
   )
@@ -278,21 +266,13 @@ class MoEConfig(Base):
     Enum(Activation), default=Activation.SiLU
   )
   routed_experts_use_bias: Mapped[bool] = mapped_column(Boolean, default=False)
-  aux_loss_alpha: Mapped[float] = mapped_column(
-    Float, nullable=True, default=None
-  )
-  norm_topk_prob: Mapped[bool] = mapped_column(
-    Boolean, nullable=True, default=None
-  )
+  aux_loss_alpha: Mapped[float] = mapped_column(Float, nullable=True, default=None)
+  norm_topk_prob: Mapped[bool] = mapped_column(Boolean, nullable=True, default=None)
   score_func: Mapped[Activation] = mapped_column(
     Enum(Activation), nullable=True, default=None
   )
-  route_scale: Mapped[float] = mapped_column(
-    Float, nullable=True, default=None
-  )
-  seq_aux: Mapped[bool] = mapped_column(
-    Boolean, nullable=True, default=None
-  )
+  route_scale: Mapped[float] = mapped_column(Float, nullable=True, default=None)
+  seq_aux: Mapped[bool] = mapped_column(Boolean, nullable=True, default=None)
 
   # sharding attributes
   shared_experts_sharding: Mapped[list[str]] = mapped_column(
@@ -321,15 +301,11 @@ class MoEConfig(Base):
   )
 
   # gmm attributes
-  tile_batch_seq: Mapped[int] = mapped_column(
-    Integer, nullable=False, default=512
-  )
+  tile_batch_seq: Mapped[int] = mapped_column(Integer, nullable=False, default=512)
   tile_activation_dim: Mapped[int] = mapped_column(
     Integer, nullable=False, default=1024
   )
-  tile_weight_dim: Mapped[int] = mapped_column(
-    Integer, nullable=False, default=1024
-  )
+  tile_weight_dim: Mapped[int] = mapped_column(Integer, nullable=False, default=1024)
 
   # export attributes
   export_routed_block: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -369,31 +345,15 @@ class RopeConfig(Base):
 
   theta: Mapped[float] = mapped_column(Float, default=0.0)
   type: Mapped[RopeType] = mapped_column(Enum(RopeType), default=RopeType.ROPE)
-  beta_fast: Mapped[int] = mapped_column(
-    Integer, nullable=True, default=None
-  )
-  beta_slow: Mapped[int] = mapped_column(
-    Integer, nullable=True, default=None
-  )
-  factor: Mapped[int] = mapped_column(
-    Integer, nullable=True, default=None
-  )
-  original_seq_len: Mapped[int] = mapped_column(
-    Integer, nullable=True, default=None
-  )
-  mscale: Mapped[float] = mapped_column(
-    Float, nullable=True, default=None
-  )
-  mscale_all_dim: Mapped[float] = mapped_column(
-    Float, nullable=True, default=None
-  )
+  beta_fast: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
+  beta_slow: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
+  factor: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
+  original_seq_len: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
+  mscale: Mapped[float] = mapped_column(Float, nullable=True, default=None)
+  mscale_all_dim: Mapped[float] = mapped_column(Float, nullable=True, default=None)
 
-  min_timescale: Mapped[Integer] = mapped_column(
-    Float, nullable=False, default=1
-  )
-  max_timescale: Mapped[Integer] = mapped_column(
-    Float, nullable=False, default=10000
-  )
+  min_timescale: Mapped[Integer] = mapped_column(Float, nullable=False, default=1)
+  max_timescale: Mapped[Integer] = mapped_column(Float, nullable=False, default=10000)
 
 
 class EmbeddingConfig(Base):
