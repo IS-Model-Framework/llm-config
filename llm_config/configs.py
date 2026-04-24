@@ -317,7 +317,9 @@ class MoEConfig(Base):
   export_unpermute: Mapped[bool] = mapped_column(Boolean, default=True)
   export_routed_mlp: Mapped[bool] = mapped_column(Boolean, default=True)
   export_shared_block_up_projection: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_shared_block_down_projection: Mapped[bool] = mapped_column(Boolean, default=True)
+  export_shared_block_down_projection: Mapped[bool] = mapped_column(
+    Boolean, default=True
+  )
 
   def shared_experts_to_mlp(self) -> MLPConfig:
     return MLPConfig(
