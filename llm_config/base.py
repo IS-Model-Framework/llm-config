@@ -9,7 +9,9 @@ class Base(DeclarativeBase, MappedAsDataclass):
 
   id: Mapped[int] = mapped_column(primary_key=True, autoincrement="auto", init=False)
   name: Mapped[str] = mapped_column(String(30), unique=True)
-  user: Mapped[str] = mapped_column(String(30), default=get_current_user, init=False)
+  user: Mapped[str] = mapped_column(
+    String(30), default_factory=get_current_user, init=False
+  )
 
   def __repr__(self):
     attrs = []
