@@ -273,6 +273,8 @@ class MoEConfig(Base):
   )
   route_scale: Mapped[float] = mapped_column(Float, nullable=True, default=None)
   seq_aux: Mapped[bool] = mapped_column(Boolean, nullable=True, default=None)
+  n_expert_groups: Mapped[int] = mapped_column(Integer, default=1)
+  n_limited_groups: Mapped[int] = mapped_column(Integer, default=1)
 
   # sharding attributes
   shared_experts_sharding: Mapped[list[str]] = mapped_column(
@@ -314,6 +316,10 @@ class MoEConfig(Base):
   export_permute: Mapped[bool] = mapped_column(Boolean, default=True)
   export_unpermute: Mapped[bool] = mapped_column(Boolean, default=True)
   export_routed_mlp: Mapped[bool] = mapped_column(Boolean, default=True)
+  export_shared_block_up_projection: Mapped[bool] = mapped_column(Boolean, default=True)
+  export_shared_block_down_projection: Mapped[bool] = mapped_column(
+    Boolean, default=True
+  )
 
   def shared_experts_to_mlp(self) -> MLPConfig:
     return MLPConfig(
@@ -327,6 +333,8 @@ class MoEConfig(Base):
       weight_dtype=self.weight_dtype,
       activations_in_float32=self.shared_experts_activations_in_float32,
       dropout=self.shared_experts_dropout,
+      export_up_projection=self.export_shared_block_up_projection,
+      export_down_projection=self.export_shared_block_down_projection,
     )
 
 
