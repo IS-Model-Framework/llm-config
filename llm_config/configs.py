@@ -273,6 +273,8 @@ class MoEConfig(Base):
   )
   route_scale: Mapped[float] = mapped_column(Float, nullable=True, default=None)
   seq_aux: Mapped[bool] = mapped_column(Boolean, nullable=True, default=None)
+  n_expert_groups: Mapped[int] = mapped_column(Integer, default=1)
+  n_limited_groups: Mapped[int] = mapped_column(Integer, default=1)
 
   # sharding attributes
   shared_experts_sharding: Mapped[list[str]] = mapped_column(
