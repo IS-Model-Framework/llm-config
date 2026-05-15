@@ -69,6 +69,7 @@ def _parse_file(file: str, component_name: str | None = None):
   config = configparser.ConfigParser()
   config.read(file, encoding="utf-8")
   components = {}
+  model_name = config.get("Model", "name", fallback=None)
   for section in config.sections():
     # If component_name is provided, use it for all sections
     # Otherwise, try to infer from section name (for model configs)
@@ -113,6 +114,11 @@ def _parse_file(file: str, component_name: str | None = None):
           except (ValueError, SyntaxError):
             v = [item.strip() for item in v.strip("[]").split(",")]  # type: ignore[assignment]
         attrs[k] = v
+    if "name" not in attrs:
+      if model_name is not None:
+        attrs["name"] = model_name
+      else:
+        attrs["name"] = section
     components[section.lower()] = config_obj(**attrs)
   return components
 
