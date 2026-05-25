@@ -174,12 +174,14 @@ class AttentionConfig(Base):
   out_projection_use_bias: Mapped[bool] = mapped_column(Boolean, default=False)
   matmul_precision: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
   weight_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
+  kvcache_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
   use_softmax: Mapped[bool] = mapped_column(Boolean, default=True)
   use_scale: Mapped[bool] = mapped_column(Boolean, default=True)
 
   export_qkv_projection: Mapped[bool] = mapped_column(Boolean, default=True)
   export_dot_attention: Mapped[bool] = mapped_column(Boolean, default=True)
   export_out_projection: Mapped[bool] = mapped_column(Boolean, default=True)
+  export_kv_cache_update: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class MLAConfig(AttentionConfig):
