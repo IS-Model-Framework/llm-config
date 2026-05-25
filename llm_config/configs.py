@@ -214,7 +214,6 @@ class MHAConfig(AttentionConfig):
   )
 
   head_dim: Mapped[int] = mapped_column(Integer, nullable=True, default=None)
-  export_kv_cache_update: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 # ==============================================================================
