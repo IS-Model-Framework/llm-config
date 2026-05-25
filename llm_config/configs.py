@@ -177,7 +177,7 @@ class AttentionConfig(Base):
   export_qkv_projection: Mapped[bool] = mapped_column(Boolean, default=True)
   export_dot_attention: Mapped[bool] = mapped_column(Boolean, default=True)
   export_out_projection: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_kv_cache_update: Mapped[bool] = mapped_column(Boolean, default=False)
+  export_kvcache_update: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class MLAConfig(AttentionConfig):
