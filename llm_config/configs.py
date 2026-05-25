@@ -138,10 +138,6 @@ class ModelConfig(Base):
   embed_config: Mapped["EmbeddingConfig"] = relationship(
     back_populates="model_config", init=False, lazy="immediate"
   )
-  enable_kv_cache: Mapped[bool] = mapped_column(Boolean, default=False)
-  model_mode: Mapped[str] = mapped_column(String(20), default="train")
-  max_prefill_length: Mapped[int] = mapped_column(Integer, default=0)
-  max_target_length: Mapped[int] = mapped_column(Integer, default=0)
 
   export_mlp: Mapped[bool] = mapped_column(Boolean, default=True)
   export_moe: Mapped[bool] = mapped_column(Boolean, default=True)
