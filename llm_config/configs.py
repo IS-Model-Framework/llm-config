@@ -163,7 +163,7 @@ class AttentionConfig(Base):
 
   num_query_heads: Mapped[int] = mapped_column(Integer)
   num_kv_heads: Mapped[int] = mapped_column(Integer)
-  prefill_len: Mapped[int] = mapped_column(Integer)
+  prefill_len: Mapped[int] = mapped_column(Integer, default=128)
   dropout: Mapped[float] = mapped_column(Float, nullable=True, default=None)
   sharding: Mapped[list[str]] = mapped_column(
     MutableList.as_mutable(JSON), nullable=True, default=None
