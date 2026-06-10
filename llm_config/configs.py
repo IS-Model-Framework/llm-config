@@ -145,6 +145,7 @@ class ModelConfig(Base):
   export_embed: Mapped[bool] = mapped_column(Boolean, default=True)
   export_lm_head: Mapped[bool] = mapped_column(Boolean, default=True)
   export_transformer_body: Mapped[bool] = mapped_column(Boolean, default=True)
+  export_full_transformer_body: Mapped[bool] = mapped_column(Boolean, default=True)
   export_model_computation: Mapped[bool] = mapped_column(Boolean, default=True)
   export_loss_computation: Mapped[bool] = mapped_column(Boolean, default=True)
   export_mla: Mapped[bool] = mapped_column(Boolean, default=True)
