@@ -148,6 +148,7 @@ class ModelConfig(Base):
   export_full_transformer_body: Mapped[bool] = mapped_column(Boolean, default=True)
   export_model_computation: Mapped[bool] = mapped_column(Boolean, default=True)
   export_loss_computation: Mapped[bool] = mapped_column(Boolean, default=True)
+  export_backward_computation: Mapped[bool] = mapped_column(Boolean, default=True)
   export_mla: Mapped[bool] = mapped_column(Boolean, default=True)
   export_mha: Mapped[bool] = mapped_column(Boolean, default=True)
   export_whole_computation: Mapped[bool] = mapped_column(Boolean, default=True)
