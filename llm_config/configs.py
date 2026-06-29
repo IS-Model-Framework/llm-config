@@ -17,6 +17,7 @@ __all__ = [
   "ModelConfig",
   "RMSNormConfig",
   "RopeConfig",
+  "ParallelismConfig",
 ]
 
 
@@ -138,6 +139,15 @@ class ModelConfig(Base):
   embed_config: Mapped["EmbeddingConfig"] = relationship(
     back_populates="model_config", init=False, lazy="immediate"
   )
+  parallelism_config_name: Mapped[str] = mapped_column(
+  ForeignKey("ParallelismConfig.name"), nullable=True, default=None
+  )
+  parallelism_config: Mapped["ParallelismConfig"] = relationship(
+    back_populates="model_config",
+    init=False,
+    lazy="immediate",
+  )
+
 
   export_mlp: Mapped[bool] = mapped_column(Boolean, default=True)
   export_moe: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -404,3 +414,24 @@ class RMSNormConfig(Base):
     MutableList.as_mutable(JSON), nullable=True, default=None
   )
   weight_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
+  
+  
+# ==============================================================================
+# Parallelism
+# ==============================================================================
+class ParallelismConfig(Base):
+  __tablename__ = "ParallelismConfig"
+
+  model_config: Mapped[list["ModelConfig"] | None] = relationship(
+    back_populates="parallelism_config",
+    cascade="all, delete-orphan",
+    init=False,
+    lazy="immediate",
+  )
+
+  tp: Mapped[int] = mapped_column(Integer, default=1)
+  dp: Mapped[int] = mapped_column(Integer, default=1)
+  fsdp: Mapped[int] = mapped_column(Integer, default=1)
+  cp: Mapped[int] = mapped_column(Integer, default=1)
+  ep: Mapped[int] = mapped_column(Integer, default=1)
+  axis_order: Mapped[str] = mapped_column(String, default="")
