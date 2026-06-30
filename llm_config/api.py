@@ -63,6 +63,73 @@ def comments_detail(config_type: Base) -> str:
   return "\n".join(comments)
 
 
+def parse_list_str(s):
+  if s is None:
+    return None
+
+  s = s.strip()
+  if s == "":
+    return None
+
+  i = 0
+  n = len(s)
+
+  def parse_value():
+    nonlocal i
+    while i < n and s[i].isspace():
+      i += 1
+    if i < n and s[i] == "[":
+      return parse_array()
+    start = i
+    while i < n and s[i] not in ",]":
+      i += 1
+    token = s[start:i].strip()
+    if token == "" or token.lower() in {"nil", "null", "none"}:
+      return None
+    return token
+
+  def parse_array():
+    nonlocal i
+    result = []
+    if s[i] != "[":
+      raise ValueError(f"Expected '[' at position {i}")
+    i += 1
+    while i < n:
+      while i < n and s[i].isspace():
+        i += 1
+      if i < n and s[i] == "]":
+        i += 1
+        return result
+
+      value = parse_value()
+      result.append(value)
+
+      while i < n and s[i].isspace():
+        i += 1
+      if i < n and s[i] == ",":
+        i += 1
+        while i < n and s[i].isspace():
+          i += 1
+        if i < n and s[i] == "]":
+          result.append(None)
+          i += 1
+          return result
+      elif i < n and s[i] == "]":
+        i += 1
+        return result
+      else:
+        raise ValueError(f"Expected ',' or ']' at position {i}")
+    raise ValueError("Unclosed '['")
+
+  parsed = parse_value()
+  while i < n and s[i].isspace():
+    i += 1
+  if i != n:
+    raise ValueError(f"Unexpected content at position {i}")
+
+  return parsed
+
+
 def _parse_file(file: str, component_name: str | None = None):
   from sqlalchemy import Enum as SQLEnum
 
@@ -111,7 +178,7 @@ def _parse_file(file: str, component_name: str | None = None):
           try:
             v = [ast.literal_eval(item) for item in v.strip("[]").split(",")]  # type: ignore[assignment]
           except (ValueError, SyntaxError):
-            v = [item.strip() for item in v.strip("[]").split(",")]  # type: ignore[assignment]
+            v = parse_list_str(v)
         attrs[k] = v
     components[section.lower()] = config_obj(**attrs)
   return components
