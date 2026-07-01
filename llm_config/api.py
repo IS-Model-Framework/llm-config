@@ -86,7 +86,10 @@ def parse_list_str(s):
     token = s[start:i].strip()
     if token == "" or token.lower() in {"nil", "null", "none"}:
       return None
-    return token
+    try:
+      return ast.literal_eval(token)
+    except (ValueError, SyntaxError):
+      return token
 
   def parse_array():
     nonlocal i
@@ -177,7 +180,7 @@ def _parse_file(file: str, component_name: str | None = None):
         except (ValueError, TypeError):
           try:
             v = [ast.literal_eval(item) for item in v.strip("[]").split(",")]  # type: ignore[assignment]
-          except (ValueError, SyntaxError):
+          except (ValueError, SyntaxError, NotImplementedError):
             v = parse_list_str(v)
         attrs[k] = v
     components[section.lower()] = config_obj(**attrs)
