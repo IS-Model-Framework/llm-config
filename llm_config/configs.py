@@ -78,6 +78,7 @@ class ModelConfig(Base):
   n_dense_layers: Mapped[int] = mapped_column(Integer, default=0)
   batch_size: Mapped[int] = mapped_column(Integer, default=1)
   tie_word_embeddings: Mapped[bool] = mapped_column(Boolean, default=True)
+  use_kernel: Mapped[bool] = mapped_column(Boolean, default=False)
   activation_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
   assemble: Mapped[list[str]] = mapped_column(
     MutableList.as_mutable(JSON), nullable=True, default_factory=list
