@@ -10,9 +10,9 @@ from llm_config.configs import (
   MLPConfig,
   ModelConfig,
   MoEConfig,
+  ParallelismConfig,
   RMSNormConfig,
   RopeConfig,
-  ParallelismConfig,
 )
 
 INDENTATION_STRIDE = 2
@@ -28,7 +28,7 @@ CONFIG_MAP = {
   "moe": MoEConfig,
   "mlp": MLPConfig,
   "norm": RMSNormConfig,
-  "parallelism": ParallelismConfig
+  "parallelism": ParallelismConfig,
 }
 ATTRS_MAP = {
   "mesh": "mesh_config",

@@ -15,9 +15,9 @@ __all__ = [
   "MeshConfig",
   "MoEConfig",
   "ModelConfig",
+  "ParallelismConfig",
   "RMSNormConfig",
   "RopeConfig",
-  "ParallelismConfig",
 ]
 
 
@@ -140,14 +140,13 @@ class ModelConfig(Base):
     back_populates="model_config", init=False, lazy="immediate"
   )
   parallelism_config_name: Mapped[str] = mapped_column(
-  ForeignKey("ParallelismConfig.name"), nullable=True, default=None
+    ForeignKey("ParallelismConfig.name"), nullable=True, default=None
   )
   parallelism_config: Mapped["ParallelismConfig"] = relationship(
     back_populates="model_config",
     init=False,
     lazy="immediate",
   )
-
 
   export_mlp: Mapped[bool] = mapped_column(Boolean, default=True)
   export_moe: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -414,8 +413,8 @@ class RMSNormConfig(Base):
     MutableList.as_mutable(JSON), nullable=True, default=None
   )
   weight_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
-  
-  
+
+
 # ==============================================================================
 # Parallelism
 # ==============================================================================
