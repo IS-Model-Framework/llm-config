@@ -62,6 +62,12 @@ class MeshConfig(Base):
     MutableList.as_mutable(JSON), nullable=True, default=None
   )
   hardware: Mapped[Hardware] = mapped_column(Enum(Hardware), default=Hardware.CPU)
+  topology: Mapped[str] = mapped_column(
+    String,
+    nullable=True,
+    default=None,
+    comment="Physical device topology descriptor for the mesh.",
+  )
 
 
 # ==============================================================================
