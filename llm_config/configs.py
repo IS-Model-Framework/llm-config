@@ -55,12 +55,6 @@ class MeshConfig(Base):
     lazy="immediate",
   )
 
-  axes_name: Mapped[list[str]] = mapped_column(
-    MutableList.as_mutable(JSON), nullable=True, default=None
-  )
-  shape: Mapped[list[int]] = mapped_column(
-    MutableList.as_mutable(JSON), nullable=True, default=None
-  )
   hardware: Mapped[Hardware] = mapped_column(Enum(Hardware), default=Hardware.CPU)
   topology: Mapped[str] = mapped_column(
     String,
