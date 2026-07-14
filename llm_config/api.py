@@ -10,6 +10,7 @@ from llm_config.configs import (
   MLPConfig,
   ModelConfig,
   MoEConfig,
+  ParallelismConfig,
   RMSNormConfig,
   RopeConfig,
 )
@@ -27,6 +28,7 @@ CONFIG_MAP = {
   "moe": MoEConfig,
   "mlp": MLPConfig,
   "norm": RMSNormConfig,
+  "parallelism": ParallelismConfig,
 }
 ATTRS_MAP = {
   "mesh": "mesh_config",
@@ -37,6 +39,7 @@ ATTRS_MAP = {
   "moe": "moe_config",
   "mlp": "mlp_config",
   "norm": "rmsnorm_config",
+  "parallelism": "parallelism_config",
 }
 REVERSE_ATTRS_MAP = dict(zip(ATTRS_MAP.values(), ATTRS_MAP.keys(), strict=True))
 ATTRS_NAME_MAP = {
@@ -48,6 +51,7 @@ ATTRS_NAME_MAP = {
   "moe": "moe_config_name",
   "mlp": "mlp_config_name",
   "norm": "rmsnorm_config_name",
+  "parallelism": "parallelism_config_name",
 }
 
 
