@@ -155,19 +155,32 @@ class ModelConfig(Base):
     lazy="immediate",
   )
 
+  # Deprecated export_mlp
   export_mlp: Mapped[bool] = mapped_column(Boolean, default=True)
+  # Deprecated export_moe
   export_moe: Mapped[bool] = mapped_column(Boolean, default=True)
+  export_ffn: Mapped[bool] = mapped_column(Boolean, default=True)
+  # Deprecated export_rmsnorm
   export_rmsnorm: Mapped[bool] = mapped_column(Boolean, default=True)
   export_embed: Mapped[bool] = mapped_column(Boolean, default=True)
   export_lm_head: Mapped[bool] = mapped_column(Boolean, default=True)
+  # Deprecated export_transformer_body
   export_transformer_body: Mapped[bool] = mapped_column(Boolean, default=True)
+  export_single_transformer_body: Mapped[bool] = mapped_column(Boolean, default=True)
   export_full_transformer_body: Mapped[bool] = mapped_column(Boolean, default=True)
   export_model_computation: Mapped[bool] = mapped_column(Boolean, default=True)
   export_loss_computation: Mapped[bool] = mapped_column(Boolean, default=True)
   export_forward_computation: Mapped[bool] = mapped_column(Boolean, default=True)
   export_backward_computation: Mapped[bool] = mapped_column(Boolean, default=True)
+  export_forward_backward_computation: Mapped[bool] = mapped_column(
+    Boolean, default=True
+  )
+  export_optimizer: Mapped[bool] = mapped_column(Boolean, default=True)
+  # Deprecated export_mla
   export_mla: Mapped[bool] = mapped_column(Boolean, default=True)
+  # Deprecated export_mha
   export_mha: Mapped[bool] = mapped_column(Boolean, default=True)
+  export_attn: Mapped[bool] = mapped_column(Boolean, default=True)
   export_whole_computation: Mapped[bool] = mapped_column(Boolean, default=True)
 
   def __hash__(self):
