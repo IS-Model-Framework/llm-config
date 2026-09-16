@@ -45,6 +45,11 @@ class Dtype(enum.Enum):
   INT32 = "int32"
 
 
+class ModelType(enum.Enum):
+  LLAMA3 = "llama3"
+  DEEPSEEK = "deepseek"
+
+
 class MeshConfig(Base):
   __tablename__ = "MeshConfig"
 
@@ -77,7 +82,7 @@ class ModelConfig(Base):
   __tablename__ = "ModelConfig"
 
   name: Mapped[str] = mapped_column(String(30), unique=True)
-  model_type: Mapped[str] = mapped_column(String(30), required=True)
+  model_type: Mapped[ModelType] = mapped_column(Enum(ModelType), nullable=False)
   emb_dim: Mapped[int] = mapped_column(
     Integer, comment="The hidden size for the model."
   )
@@ -100,56 +105,56 @@ class ModelConfig(Base):
     MutableList.as_mutable(JSON), nullable=True, default_factory=list
   )
 
-  mesh_config_name: Mapped[str] = mapped_column(
-    ForeignKey("MeshConfig.name"), nullable=True, default=None
+  mesh_config_id: Mapped[str] = mapped_column(
+    ForeignKey("MeshConfig.id"), nullable=True, default=None
   )
   mesh_config: Mapped["MeshConfig"] = relationship(
     back_populates="model_config", init=False, lazy="immediate"
   )
-  mla_config_name: Mapped[str] = mapped_column(
-    ForeignKey("MLAConfig.name"), nullable=True, default=None
+  mla_config_id: Mapped[str] = mapped_column(
+    ForeignKey("MLAConfig.id"), nullable=True, default=None
   )
   mla_config: Mapped["MLAConfig"] = relationship(
     back_populates="model_config", init=False, lazy="immediate"
   )
-  mha_config_name: Mapped[str] = mapped_column(
-    ForeignKey("MHAConfig.name"), nullable=True, default=None
+  mha_config_id: Mapped[str] = mapped_column(
+    ForeignKey("MHAConfig.id"), nullable=True, default=None
   )
   mha_config: Mapped["MHAConfig"] = relationship(
     back_populates="model_config", init=False, lazy="immediate"
   )
-  mlp_config_name: Mapped[str] = mapped_column(
-    ForeignKey("MLPConfig.name"), nullable=True, default=None
+  mlp_config_id: Mapped[str] = mapped_column(
+    ForeignKey("MLPConfig.id"), nullable=True, default=None
   )
   mlp_config: Mapped["MLPConfig"] = relationship(
     back_populates="model_config", init=False, lazy="immediate"
   )
-  moe_config_name: Mapped[str] = mapped_column(
-    ForeignKey("MoEConfig.name"), nullable=True, default=None
+  moe_config_id: Mapped[str] = mapped_column(
+    ForeignKey("MoEConfig.id"), nullable=True, default=None
   )
   moe_config: Mapped["MoEConfig"] = relationship(
     back_populates="model_config", init=False, lazy="immediate"
   )
-  rmsnorm_config_name: Mapped[str] = mapped_column(
-    ForeignKey("RMSNormConfig.name"), nullable=True, default=None
+  rmsnorm_config_id: Mapped[str] = mapped_column(
+    ForeignKey("RMSNormConfig.id"), nullable=True, default=None
   )
   rmsnorm_config: Mapped["RMSNormConfig"] = relationship(
     back_populates="model_config", init=False, lazy="immediate"
   )
-  rope_config_name: Mapped[str] = mapped_column(
-    ForeignKey("RopeConfig.name"), nullable=True, default=None
+  rope_config_id: Mapped[str] = mapped_column(
+    ForeignKey("RopeConfig.id"), nullable=True, default=None
   )
   rope_config: Mapped["RopeConfig"] = relationship(
     back_populates="model_config", init=False, lazy="immediate"
   )
-  embed_config_name: Mapped[str] = mapped_column(
-    ForeignKey("EmbeddingConfig.name"), nullable=True, default=None
+  embed_config_id: Mapped[str] = mapped_column(
+    ForeignKey("EmbeddingConfig.id"), nullable=True, default=None
   )
   embed_config: Mapped["EmbeddingConfig"] = relationship(
     back_populates="model_config", init=False, lazy="immediate"
   )
-  parallelism_config_name: Mapped[str] = mapped_column(
-    ForeignKey("ParallelismConfig.name"), nullable=True, default=None
+  parallelism_config_id: Mapped[str] = mapped_column(
+    ForeignKey("ParallelismConfig.id"), nullable=True, default=None
   )
   parallelism_config: Mapped["ParallelismConfig"] = relationship(
     back_populates="model_config",
