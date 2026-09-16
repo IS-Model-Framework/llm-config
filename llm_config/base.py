@@ -8,7 +8,6 @@ class Base(DeclarativeBase, MappedAsDataclass):
   __abstract__ = True
 
   id: Mapped[int] = mapped_column(primary_key=True, autoincrement="auto", init=False)
-  name: Mapped[str] = mapped_column(String(30), unique=True)
   user: Mapped[str] = mapped_column(
     String(30), default_factory=get_current_user, init=False
   )
