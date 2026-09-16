@@ -76,6 +76,8 @@ class MeshConfig(Base):
 class ModelConfig(Base):
   __tablename__ = "ModelConfig"
 
+  name: Mapped[str] = mapped_column(String(30), unique=True)
+  model_type: Mapped[str] = mapped_column(String(30), required=True)
   emb_dim: Mapped[int] = mapped_column(
     Integer, comment="The hidden size for the model."
   )
@@ -155,34 +157,6 @@ class ModelConfig(Base):
     lazy="immediate",
   )
 
-  # Deprecated export_mlp
-  export_mlp: Mapped[bool] = mapped_column(Boolean, default=True)
-  # Deprecated export_moe
-  export_moe: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_ffn: Mapped[bool] = mapped_column(Boolean, default=True)
-  # Deprecated export_rmsnorm
-  export_rmsnorm: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_embed: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_lm_head: Mapped[bool] = mapped_column(Boolean, default=True)
-  # Deprecated export_transformer_body
-  export_transformer_body: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_single_transformer_body: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_full_transformer_body: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_model_computation: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_loss_computation: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_forward_computation: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_backward_computation: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_forward_backward_computation: Mapped[bool] = mapped_column(
-    Boolean, default=True
-  )
-  export_optimizer: Mapped[bool] = mapped_column(Boolean, default=True)
-  # Deprecated export_mla
-  export_mla: Mapped[bool] = mapped_column(Boolean, default=True)
-  # Deprecated export_mha
-  export_mha: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_attn: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_whole_computation: Mapped[bool] = mapped_column(Boolean, default=True)
-
   def __hash__(self):
     return hash(self.__repr__())
 
@@ -206,11 +180,6 @@ class AttentionConfig(Base):
   kvcache_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
   use_softmax: Mapped[bool] = mapped_column(Boolean, default=True)
   use_scale: Mapped[bool] = mapped_column(Boolean, default=True)
-
-  export_qkv_projection: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_dot_attention: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_out_projection: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_kvcache_update: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class MLAConfig(AttentionConfig):
@@ -275,9 +244,6 @@ class MLPConfig(Base):
   matmul_precision: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
   weight_dtype: Mapped[Dtype] = mapped_column(Enum(Dtype), default=Dtype.FLOAT32)
   activations_in_float32: Mapped[bool] = mapped_column(Boolean, default=True)
-
-  export_up_projection: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_down_projection: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 class MoEConfig(Base):
@@ -344,21 +310,8 @@ class MoEConfig(Base):
   )
   tile_weight_dim: Mapped[int] = mapped_column(Integer, nullable=False, default=1024)
 
-  # export attributes
-  export_routed_block: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_shared_block: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_gate_logit: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_permute: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_unpermute: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_routed_mlp: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_shared_block_up_projection: Mapped[bool] = mapped_column(Boolean, default=True)
-  export_shared_block_down_projection: Mapped[bool] = mapped_column(
-    Boolean, default=True
-  )
-
   def shared_experts_to_mlp(self) -> MLPConfig:
     return MLPConfig(
-      name=self.name,
       dim=self.shared_experts_dim * self.n_shared_experts,
       activation=self.shared_experts_activation,
       use_bias=self.shared_experts_use_bias,
@@ -368,8 +321,6 @@ class MoEConfig(Base):
       weight_dtype=self.weight_dtype,
       activations_in_float32=self.shared_experts_activations_in_float32,
       dropout=self.shared_experts_dropout,
-      export_up_projection=self.export_shared_block_up_projection,
-      export_down_projection=self.export_shared_block_down_projection,
     )
 
 
